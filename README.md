@@ -92,6 +92,15 @@
 2. 在 qBitGlass 點右上角 **＋** 新增伺服器，網址填 `http://電腦IP:8080`
 3. 點「測試連線」，確認成功後儲存
 
+### 連線問題排解
+
+| 錯誤訊息 | 原因與處理 |
+| --- | --- |
+| 登入失敗：帳號或密碼錯誤 | 帳密確實不符。v1.0.1 以前的版本連 qBittorrent 5.2+ 會誤報這個訊息，請更新到 v1.0.2 以上 |
+| qBittorrent 拒絕了這個連線位址（401） | 被「主機標頭驗證」擋下，常見於 Docker 或路由器把外部連接埠對應到不同的內部連接埠。請在 Web UI 設定關閉「啟用主機標頭驗證」，或讓內外連接埠相同 |
+| 伺服器要求轉址到… | 反向代理把網址轉到別處（例如 http → https），在編輯伺服器畫面點「改用…」即可 |
+| 此 IP 因多次登入失敗已被封鎖 | qBittorrent 的登入失敗封鎖，等封鎖時間過後再試，或在 Web UI 設定調整 |
+
 ## 自行建置
 
 需要 Xcode 26 以上版本與 [XcodeGen](https://github.com/yonaskolb/XcodeGen)：
@@ -104,7 +113,7 @@ scripts/build_ipa.sh       # 輸出 dist/qBitGlass.ipa（未簽名）
 
 ## 測試
 
-`scripts/mock_qb.py` 是依 qBittorrent 5.x WebUI API 行為撰寫的模擬伺服器，只監聽 `127.0.0.1`，不需要安裝 qBittorrent 就能開發與測試：
+`scripts/mock_qb.py` 是依 qBittorrent WebUI API 行為撰寫的模擬伺服器，只監聽 `127.0.0.1`，不需要安裝 qBittorrent 就能開發與測試。預設模擬 5.2 的回應（登入成功回 204、帳密錯誤回 401，並檢查主機標頭連接埠），設 `MOCK_LEGACY=1` 則模擬 5.1 以前的「Ok.」／「Fails.」：
 
 ```bash
 python3 -I scripts/mock_qb.py 8080 &     # 帳號 admin / adminadmin，API Key：qbt_testkey
@@ -112,7 +121,7 @@ xcodebuild -project QBManager.xcodeproj -scheme QBManager \
   -destination 'platform=iOS Simulator,name=iPhone 18 Pro' test
 ```
 
-UI 測試會跑完以下流程，並把截圖存到 `build/shots/`：載入 → 狀態篩選 → 全選 → 批次強制啟動 → 左滑刪除 → 分類篩選 → 詳情／檔案／Tracker → 新增磁力連結。
+UI 測試會跑完以下流程，並把截圖存到 `build/shots/`：載入 → 狀態篩選 → 全選 → 批次強制啟動 → 左滑刪除 → 分類篩選 → 詳情／檔案／Tracker → 新增磁力連結，另外從表單新增伺服器，分別以錯誤與正確的密碼測試連線。
 
 ## 專案結構
 
