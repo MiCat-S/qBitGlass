@@ -19,9 +19,9 @@
 
 <p align="center">
   <a href="../../releases/latest"><b>⬇️ 下載 IPA</b></a> ·
-  <a href="../../wiki"><b>📖 Wiki 文件</b></a> ·
-  <a href="../../wiki/安裝指南">安裝指南</a> ·
-  <a href="../../wiki/常見問題">常見問題</a>
+  <a href="#安裝">安裝</a> ·
+  <a href="#快速開始">快速開始</a> ·
+  <a href="#自行建置">自行建置</a>
 </p>
 
 ---
@@ -86,8 +86,6 @@
 
 > iOS 16 以上需在「設定 → 隱私權與安全性」開啟**開發者模式**。第一次連線時請允許「區域網路」權限。
 
-詳細步驟請見 Wiki：[安裝指南](../../wiki/安裝指南)、[qBittorrent 設定](../../wiki/qBittorrent-設定)。
-
 ## 快速開始
 
 1. 在 qBittorrent 開啟 **偏好設定 → Web UI → Web 使用者介面（遠端控制）**，設定連接埠、帳號和密碼
@@ -114,7 +112,7 @@ xcodebuild -project QBManager.xcodeproj -scheme QBManager \
   -destination 'platform=iOS Simulator,name=iPhone 18 Pro' test
 ```
 
-UI 測試會跑完以下流程，並把截圖存到 `build/shots/`：載入 → 狀態篩選 → 全選 → 批次強制啟動 → 左滑刪除 → 分類篩選 → 詳情／檔案／Tracker → 新增磁力連結。詳見 [開發指南](../../wiki/開發指南)。
+UI 測試會跑完以下流程，並把截圖存到 `build/shots/`：載入 → 狀態篩選 → 全選 → 批次強制啟動 → 左滑刪除 → 分類篩選 → 詳情／檔案／Tracker → 新增磁力連結。
 
 ## 專案結構
 
