@@ -26,6 +26,11 @@ final class AppModel {
            let list = try? JSONDecoder().decode([ServerConfig].self, from: data) {
             servers = list
         }
+        // 啟動時直接以上次的伺服器作為初始畫面，不會先閃過伺服器清單再跳轉
+        let autoOpen = UserDefaults.standard.object(forKey: "autoOpenLast") as? Bool ?? true
+        if autoOpen, let id = lastServerID, server(id) != nil {
+            path.append(id)
+        }
     }
 
     var lastServerID: UUID? {

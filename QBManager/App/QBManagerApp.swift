@@ -25,8 +25,6 @@ struct QBManagerApp: App {
 
 struct RootView: View {
     @Environment(AppModel.self) private var model
-    @AppStorage("autoOpenLast") private var autoOpenLast = true
-    @State private var didAutoOpen = false
 
     var body: some View {
         @Bindable var model = model
@@ -39,13 +37,6 @@ struct RootView: View {
                         ContentUnavailableView("找不到伺服器", systemImage: "server.rack")
                     }
                 }
-        }
-        .onAppear {
-            guard !didAutoOpen else { return }
-            didAutoOpen = true
-            if autoOpenLast, let id = model.lastServerID, model.server(id) != nil {
-                model.open(id)
-            }
         }
     }
 }
