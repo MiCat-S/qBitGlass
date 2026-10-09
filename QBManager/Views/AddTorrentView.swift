@@ -12,13 +12,22 @@ struct AddTorrentView: View {
     @State private var showImporter = false
     @State private var adding = false
     @State private var error: String?
+    private let initialLinks: String
+    private let initialFiles: [TorrentUpload]
 
     private static let torrentType = UTType(filenameExtension: "torrent") ?? .data
 
     init(store: SessionStore, prefill: IncomingTorrent) {
         self.store = store
-        _links = State(initialValue: prefill.urls.joined(separator: "\n"))
-        _files = State(initialValue: prefill.files)
+        initialLinks = prefill.urls.joined(separator: "\n")
+        initialFiles = prefill.files
+        _links = State(initialValue: initialLinks)
+        _files = State(initialValue: initialFiles)
+    }
+
+    /// 使用者是否輸入或改過內容（從外部開啟時預先帶入的連結不算）
+    private var hasChanges: Bool {
+        links != initialLinks || files != initialFiles || !tagsText.isEmpty || options != AddTorrentOptions()
     }
 
     private var urlList: [String] {
@@ -99,7 +108,7 @@ struct AddTorrentView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("取消", role: .cancel) { dismiss() }
+                    DiscardButton(hasChanges: hasChanges) { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     if adding {
@@ -122,6 +131,8 @@ struct AddTorrentView: View {
                 }
             }
         }
+        // 有輸入內容時停用下滑關閉，改由「取消」確認是否捨棄
+        .interactiveDismissDisabled(hasChanges)
     }
 
     private func add() async {

@@ -5,6 +5,7 @@ struct TorrentDetailView: View {
     let hash: String
 
     @Environment(\.dismiss) private var dismiss
+    @Namespace private var sheetNS
 
     enum Tab: String, CaseIterable, Identifiable {
         case info = "概覽", files = "檔案", trackers = "Tracker"
@@ -16,7 +17,7 @@ struct TorrentDetailView: View {
     @State private var trackers: [TorrentTracker]?
     @State private var props: [String: JSONValue] = [:]
     @State private var loadError: String?
-    @State private var confirmDelete = false
+    @State private var pending: PendingAction?
     @State private var categoryTarget: HashList?
     @State private var tagTarget: HashList?
     @State private var showRename = false
@@ -57,12 +58,7 @@ struct TorrentDetailView: View {
                 }
                 .themedList()
                 .navigationTitle(t.name)
-                .toolbar { toolbar(t) }
-                .confirmationDialog("刪除「\(t.name)」？", isPresented: $confirmDelete, titleVisibility: .visible) {
-                    Button("刪除種子（保留檔案）", role: .destructive) { Task { await delete(files: false) } }
-                    Button("刪除種子及已下載檔案", role: .destructive) { Task { await delete(files: true) } }
-                    Button("取消", role: .cancel) {}
-                }
+                .toolbarItem(.topBarTrailing, source: .detailMore, in: sheetNS) { moreMenu(t) }
                 .alert("重新命名", isPresented: $showRename) {
                     TextField("名稱", text: $renameText)
                     Button("確定") {
@@ -90,14 +86,13 @@ struct TorrentDetailView: View {
             }
         }
         .navigationBarTitleDisplayMode(.inline)
-        .sheet(item: $categoryTarget) { CategoryPickerView(store: store, hashes: $0.hashes) }
-        .sheet(item: $tagTarget) { TagEditorView(store: store, hashes: $0.hashes) }
-        .alert("操作失敗", isPresented: Binding(get: { store.actionError != nil },
-                                              set: { if !$0 { store.actionError = nil } })) {
-            Button("好", role: .cancel) {}
-        } message: {
-            Text(store.actionError ?? "")
+        .sheet(item: $categoryTarget) { target in
+            CategoryPickerView(store: store, hashes: target.hashes).zoomTransition(from: target.source, in: sheetNS)
         }
+        .sheet(item: $tagTarget) { target in
+            TagEditorView(store: store, hashes: target.hashes).zoomTransition(from: target.source, in: sheetNS)
+        }
+        .actionErrorAlert(store, isActive: categoryTarget == nil && tagTarget == nil)
         .onAppear { store.acquire() }
         .onDisappear { store.release() }
         .task(id: tab) { await poll(tab) }
@@ -139,8 +134,11 @@ struct TorrentDetailView: View {
                     pill("強制", "bolt.fill", prominent: t.forceStart) {
                         await store.forceStart([hash], !t.forceStart)
                     }
-                    pill("校驗", "checkmark.arrow.trianglehead.counterclockwise") { await store.recheck([hash]) }
-                    pill("刪除", "trash.fill", tint: .red) { confirmDelete = true }
+                    // 確認框從被點的膠囊按鈕彈出
+                    pill("校驗", "checkmark.arrow.trianglehead.counterclockwise") { confirm(.recheck, at: .pillRecheck) }
+                        .confirmTorrentAction($pending, anchor: .pillRecheck, store: store)
+                    pill("刪除", "trash.fill", tint: .red) { confirm(.delete, at: .pillDelete) }
+                        .confirmTorrentAction($pending, anchor: .pillDelete, store: store, onDone: closeIfDeleted)
                 }
             }
         }
@@ -241,13 +239,18 @@ struct TorrentDetailView: View {
         if let files {
             Section {
                 ForEach(files) { f in
-                    FileRow(file: f)
-                        .listRowBackground(Theme.card)
-                        .contextMenu {
-                            ForEach(TorrentFile.priorities, id: \.value) { p in
-                                Button(p.label) { Task { await setPriority([f.index], p.value) } }
-                            }
+                    // 點一下檔案就從該列彈出優先順序選單，目前的優先順序會打勾
+                    Menu {
+                        Picker("下載優先順序", selection: Binding(get: { f.priority }, set: { p in
+                            Task { await setPriority([f.index], p) }
+                        })) {
+                            ForEach(TorrentFile.priorities, id: \.value) { p in Text(p.label).tag(p.value) }
                         }
+                    } label: {
+                        FileRow(file: f)
+                    }
+                    .tint(.primary)
+                    .listRowBackground(Theme.card)
                 }
             } header: {
                 HStack {
@@ -262,7 +265,7 @@ struct TorrentDetailView: View {
                     .textCase(nil)
                 }
             } footer: {
-                Text("長按檔案可調整下載優先順序")
+                Text("點選檔案可調整下載優先順序")
             }
         } else {
             ProgressView().frame(maxWidth: .infinity).listRowBackground(Color.clear)
@@ -320,39 +323,46 @@ struct TorrentDetailView: View {
 
     // MARK: - 工具列
 
-    @ToolbarContentBuilder
-    private func toolbar(_ t: Torrent) -> some ToolbarContent {
-        ToolbarItem(placement: .topBarTrailing) {
-            Menu {
-                Button("重新匯報", systemImage: "antenna.radiowaves.left.and.right") {
-                    Task { await store.reannounce([hash]) }
-                }
-                Button("設定分類…", systemImage: "folder") { categoryTarget = HashList(hashes: [hash]) }
-                Button("管理標籤…", systemImage: "tag") { tagTarget = HashList(hashes: [hash]) }
-                Button("重新命名…", systemImage: "pencil") {
-                    renameText = t.name
-                    showRename = true
-                }
-                Button("變更儲存位置…", systemImage: "folder.badge.gearshape") {
-                    locationText = t.savePath
-                    showLocation = true
-                }
-                Divider()
-                Toggle(isOn: Binding(get: { t.seqDl }, set: { _ in Task { await store.toggleSequential([hash]) } })) {
-                    Label("依序下載", systemImage: "arrow.right.to.line")
-                }
-                Toggle(isOn: Binding(get: { t.firstLastPiecePrio }, set: { _ in Task { await store.toggleFirstLast([hash]) } })) {
-                    Label("首尾區塊優先", systemImage: "arrow.left.and.right")
-                }
-                Divider()
-                Button("拷貝磁力連結", systemImage: "link") { UIPasteboard.general.string = t.magnetURI }
-                Button("拷貝 Hash", systemImage: "number") { UIPasteboard.general.string = t.hash }
-                Divider()
-                Button("刪除…", systemImage: "trash", role: .destructive) { confirmDelete = true }
-            } label: {
-                Label("更多", systemImage: "ellipsis.circle")
+    private func moreMenu(_ t: Torrent) -> some View {
+        Menu {
+            Button("重新匯報", systemImage: "antenna.radiowaves.left.and.right") {
+                Task { await store.reannounce([hash]) }
             }
+            Button("設定分類…", systemImage: "folder") { categoryTarget = HashList(hashes: [hash], source: .detailMore) }
+            Button("管理標籤…", systemImage: "tag") { tagTarget = HashList(hashes: [hash], source: .detailMore) }
+            Button("重新命名…", systemImage: "pencil") {
+                renameText = t.name
+                showRename = true
+            }
+            Button("變更儲存位置…", systemImage: "folder.badge.gearshape") {
+                locationText = t.savePath
+                showLocation = true
+            }
+            Divider()
+            Toggle(isOn: Binding(get: { t.seqDl }, set: { _ in Task { await store.toggleSequential([hash]) } })) {
+                Label("依序下載", systemImage: "arrow.right.to.line")
+            }
+            Toggle(isOn: Binding(get: { t.firstLastPiecePrio }, set: { _ in Task { await store.toggleFirstLast([hash]) } })) {
+                Label("首尾區塊優先", systemImage: "arrow.left.and.right")
+            }
+            Divider()
+            Button("拷貝磁力連結", systemImage: "link") { UIPasteboard.general.string = t.magnetURI }
+            Button("拷貝 Hash", systemImage: "number") { UIPasteboard.general.string = t.hash }
+            Divider()
+            Button("刪除…", systemImage: "trash", role: .destructive) { confirm(.delete, at: .detailMore) }
+        } label: {
+            Label("更多", systemImage: "ellipsis.circle")
         }
+        // 從選單刪除時，確認框從右上的「更多」按鈕彈出
+        .confirmTorrentAction($pending, anchor: .detailMore, store: store, onDone: closeIfDeleted)
+    }
+
+    private func confirm(_ kind: PendingAction.Kind, at anchor: PendingAction.Anchor) {
+        pending = PendingAction(kind: kind, hashes: [hash], anchor: anchor)
+    }
+
+    private func closeIfDeleted(_ action: PendingAction, _ ok: Bool) {
+        if ok, action.kind == .delete { dismiss() }
     }
 
     // MARK: - 載入
@@ -378,11 +388,6 @@ struct TorrentDetailView: View {
         }
     }
 
-    private func delete(files: Bool) async {
-        if await store.run({ try await $0.delete([hash], deleteFiles: files) }) {
-            dismiss()
-        }
-    }
 }
 
 private struct FileRow: View {

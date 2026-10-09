@@ -42,6 +42,7 @@ struct CategoryPickerView: View {
             .overlay { if working { ProgressView() } }
         }
         .presentationDetents([.medium, .large])
+        .actionErrorAlert(store)
     }
 
     private func row(_ title: String, value: String, symbol: String, detail: String = "") -> some View {
@@ -71,9 +72,9 @@ struct CategoryPickerView: View {
     private func apply(_ category: String) {
         working = true
         Task {
-            await store.setCategory(hashes, category)
+            // 失敗時留在畫面上顯示錯誤，成功才關閉
+            if await store.setCategory(hashes, category) { dismiss() }
             working = false
-            dismiss()
         }
     }
 }
@@ -140,6 +141,7 @@ struct TagEditorView: View {
             .overlay { if working { ProgressView() } }
         }
         .presentationDetents([.medium, .large])
+        .actionErrorAlert(store)
     }
 
     private func toggle(_ tag: String, hasAll: Bool) {
@@ -159,8 +161,7 @@ struct TagEditorView: View {
         guard !tags.isEmpty else { return }
         working = true
         Task {
-            await store.addTags(hashes, tags)
-            newTag = ""
+            if await store.addTags(hashes, tags) { newTag = "" }
             working = false
         }
     }

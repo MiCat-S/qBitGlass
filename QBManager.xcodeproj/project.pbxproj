@@ -33,6 +33,7 @@
 		E47339F0FD892C07A5300024 /* QBManagerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE3E1CC5394379059D414EBD /* QBManagerApp.swift */; };
 		EAC0B3C1901539E11FD5D24C /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E0DDCA7BEFE17384BD1B5C6 /* AppModel.swift */; };
 		F4A8866DDD69ED24B03CBBDE /* QBError.swift in Sources */ = {isa = PBXBuildFile; fileRef = D70BB8B70E59DD27770F26E3 /* QBError.swift */; };
+		F72AD169133F0939F801F28D /* Presentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA18A60F06F44FC6A14E0899 /* Presentation.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -74,6 +75,7 @@
 		D6FEFE5769C897235EB0E3AA /* ServerListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerListView.swift; sourceTree = "<group>"; };
 		D70BB8B70E59DD27770F26E3 /* QBError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QBError.swift; sourceTree = "<group>"; };
 		DE3E1CC5394379059D414EBD /* QBManagerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QBManagerApp.swift; sourceTree = "<group>"; };
+		FA18A60F06F44FC6A14E0899 /* Presentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Presentation.swift; sourceTree = "<group>"; };
 		FA77AE6AEF31EED64A84ACA9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -128,6 +130,7 @@
 				2F4758A827F6C12F604A8344 /* AddTorrentView.swift */,
 				A0E876DB34EBA25D35AE3BB8 /* CategoryTagViews.swift */,
 				802ED787B4DAA570AB74165C /* FilterView.swift */,
+				FA18A60F06F44FC6A14E0899 /* Presentation.swift */,
 				99F56EEDA651AA9C3929B582 /* ServerEditView.swift */,
 				D6FEFE5769C897235EB0E3AA /* ServerListView.swift */,
 				7935DB0BD8049EAC6381222F /* TorrentDetailView.swift */,
@@ -305,6 +308,7 @@
 				DCB909E12D88137B280CE3DA /* JSONValue.swift in Sources */,
 				D947F6D8EAF5C21F44623282 /* Keychain.swift in Sources */,
 				123D912DC1A81E73DB21BC79 /* Multipart.swift in Sources */,
+				F72AD169133F0939F801F28D /* Presentation.swift in Sources */,
 				71508800899C294EEA1F83B7 /* QBClient.swift in Sources */,
 				F4A8866DDD69ED24B03CBBDE /* QBError.swift in Sources */,
 				E47339F0FD892C07A5300024 /* QBManagerApp.swift in Sources */,

@@ -2,7 +2,8 @@ import SwiftUI
 
 struct ServerListView: View {
     @Environment(AppModel.self) private var model
-    @State private var editing: ServerConfig?
+    @Namespace private var sheetNS
+    @State private var editing: ServerEditTarget?
     @State private var showSettings = false
     @State private var pendingDelete: ServerConfig?
 
@@ -23,12 +24,17 @@ struct ServerListView: View {
                         .swipeActions(edge: .trailing) {
                             Button("刪除", systemImage: "trash") { pendingDelete = server }
                                 .tint(.red)
-                            Button("編輯", systemImage: "pencil") { editing = server }
+                            Button("編輯", systemImage: "pencil") { editing = ServerEditTarget(server: server, isNew: false) }
                                 .tint(Theme.accent)
                         }
                         .contextMenu {
-                            Button("編輯", systemImage: "pencil") { editing = server }
+                            Button("編輯", systemImage: "pencil") { editing = ServerEditTarget(server: server, isNew: false) }
                             Button("刪除", systemImage: "trash", role: .destructive) { pendingDelete = server }
+                        }
+                        // 確認框掛在這一列上，從被刪除的伺服器彈出
+                        .confirmationDialog("刪除伺服器「\(server.displayName)」？",
+                                            isPresented: deleteBinding(server), titleVisibility: .visible) {
+                            Button("刪除", role: .destructive) { model.delete(server) }
                         }
                     }
                     .onMove { model.move(from: $0, to: $1) }
@@ -37,25 +43,23 @@ struct ServerListView: View {
             }
         }
         .navigationTitle("qBittorrent")
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button("設定", systemImage: "gearshape") { showSettings = true }
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                Button("新增伺服器", systemImage: "plus") { editing = ServerConfig() }
-            }
+        .toolbarItem(.topBarLeading, source: .settings, in: sheetNS) {
+            Button("設定", systemImage: "gearshape") { showSettings = true }
         }
-        .sheet(item: $editing) { server in
-            ServerEditView(server: server, isNew: model.server(server.id) == nil)
-        }
-        .sheet(isPresented: $showSettings) { SettingsView() }
-        .confirmationDialog("刪除伺服器「\(pendingDelete?.displayName ?? "")」？",
-                            isPresented: Binding(get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } }),
-                            titleVisibility: .visible) {
-            Button("刪除", role: .destructive) {
-                if let s = pendingDelete { model.delete(s) }
+        .toolbarItem(.topBarTrailing, source: .addServer, in: sheetNS) {
+            Button("新增伺服器", systemImage: "plus") {
+                editing = ServerEditTarget(server: ServerConfig(), isNew: true, source: .addServer)
             }
         }
+        // isNew 在開啟時就決定，避免儲存後關閉動畫中標題變成「編輯伺服器」
+        .sheet(item: $editing) { target in
+            ServerEditView(server: target.server, isNew: target.isNew).zoomTransition(from: target.source, in: sheetNS)
+        }
+        .sheet(isPresented: $showSettings) { SettingsView().zoomTransition(from: .settings, in: sheetNS) }
+    }
+
+    private func deleteBinding(_ server: ServerConfig) -> Binding<Bool> {
+        Binding(get: { pendingDelete?.id == server.id }, set: { if !$0 { pendingDelete = nil } })
     }
 
     private var emptyState: some View {
@@ -65,13 +69,14 @@ struct ServerListView: View {
             Text("新增你的 qBittorrent WebUI 位址，例如\nhttp://192.168.1.10:8080")
         } actions: {
             Button {
-                editing = ServerConfig()
+                editing = ServerEditTarget(server: ServerConfig(), isNew: true, source: .emptyAddServer)
             } label: {
                 Label("新增伺服器", systemImage: "plus")
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
             }
             .glassButton(prominent: true)
+            .sheetSource(.emptyAddServer, in: sheetNS)
         }
         .background(Theme.background.ignoresSafeArea())
     }

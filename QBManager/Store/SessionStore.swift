@@ -8,7 +8,7 @@ enum ConnectionState: Equatable {
 /// 單一伺服器的連線、資料同步與批次操作。
 @Observable @MainActor
 final class SessionStore {
-    let server: ServerConfig
+    private(set) var server: ServerConfig
     private(set) var client: QBClient?
     private var engine: SyncEngine?
 
@@ -40,6 +40,8 @@ final class SessionStore {
     @ObservationIgnored private var refreshAgain = false
     @ObservationIgnored private var holders = 0
     @ObservationIgnored private var sceneActive = true
+    /// 每次重新連線或改設定就加一，讓進行中的舊請求結果被丟棄
+    @ObservationIgnored private var generation = 0
 
     init(server: ServerConfig) {
         self.server = server
@@ -100,11 +102,29 @@ final class SessionStore {
     }
 
     func reconnect() async {
+        generation += 1
         client = nil
         engine = nil
         hasLoaded = false
         state = .idle
         await refresh()
+    }
+
+    /// 伺服器設定變更：清掉舊資料並以新設定重新登入；正在顯示時立即重新連線
+    func update(_ server: ServerConfig) {
+        self.server = server
+        generation += 1
+        client = nil
+        engine = nil
+        hasLoaded = false
+        state = .idle
+        torrents = [:]
+        categories = [:]
+        tags = []
+        trackerHosts = [:]
+        serverState = ServerState()
+        syncError = nil
+        if holders > 0 && sceneActive { Task { await refresh() } }
     }
 
     func refresh() async {
@@ -118,10 +138,12 @@ final class SessionStore {
     }
 
     private func refreshOnce() async {
+        let gen = generation
         do {
-            if engine == nil { try await connect() }
+            if engine == nil { try await connect(gen) }
             guard let engine else { return }
             let snap = try await engine.poll()
+            guard gen == generation else { return }
             torrents = snap.torrents
             categories = snap.categories
             tags = snap.tags
@@ -131,7 +153,7 @@ final class SessionStore {
             state = .connected
             syncError = nil
         } catch {
-            if Self.isCancellation(error) { return }
+            if Self.isCancellation(error) || gen != generation { return }
             let msg = Self.describe(error)
             if hasLoaded {
                 syncError = msg
@@ -143,11 +165,12 @@ final class SessionStore {
         }
     }
 
-    private func connect() async throws {
+    private func connect(_ gen: Int) async throws {
         state = .connecting
         let secret = Keychain.get(server.secretAccount) ?? ""
         let c = try QBClient(config: server, secret: secret)
         let info = try await c.connect()
+        guard gen == generation else { throw CancellationError() }
         appVersion = info.app
         apiVersion = info.api
         client = c
@@ -180,18 +203,20 @@ final class SessionStore {
         }
     }
 
-    func start(_ hashes: [String]) async { await run { try await $0.start(hashes) } }
-    func stop(_ hashes: [String]) async { await run { try await $0.stop(hashes) } }
-    func forceStart(_ hashes: [String], _ value: Bool) async { await run { try await $0.setForceStart(hashes, value) } }
-    func delete(_ hashes: [String], deleteFiles: Bool) async { await run { try await $0.delete(hashes, deleteFiles: deleteFiles) } }
-    func recheck(_ hashes: [String]) async { await run { try await $0.recheck(hashes) } }
-    func reannounce(_ hashes: [String]) async { await run { try await $0.reannounce(hashes) } }
-    func queue(_ move: QueueMove, _ hashes: [String]) async { await run { try await $0.queue(move, hashes) } }
-    func toggleSequential(_ hashes: [String]) async { await run { try await $0.toggleSequential(hashes) } }
-    func toggleFirstLast(_ hashes: [String]) async { await run { try await $0.toggleFirstLastPiece(hashes) } }
-    func toggleAltSpeed() async { await run { try await $0.toggleAltSpeed() } }
+    // 回傳是否成功，讓畫面決定後續動作（例如刪除成功才關閉詳情頁）
+    @discardableResult func start(_ hashes: [String]) async -> Bool { await run { try await $0.start(hashes) } }
+    @discardableResult func stop(_ hashes: [String]) async -> Bool { await run { try await $0.stop(hashes) } }
+    @discardableResult func forceStart(_ hashes: [String], _ value: Bool) async -> Bool { await run { try await $0.setForceStart(hashes, value) } }
+    @discardableResult func delete(_ hashes: [String], deleteFiles: Bool) async -> Bool { await run { try await $0.delete(hashes, deleteFiles: deleteFiles) } }
+    @discardableResult func recheck(_ hashes: [String]) async -> Bool { await run { try await $0.recheck(hashes) } }
+    @discardableResult func reannounce(_ hashes: [String]) async -> Bool { await run { try await $0.reannounce(hashes) } }
+    @discardableResult func queue(_ move: QueueMove, _ hashes: [String]) async -> Bool { await run { try await $0.queue(move, hashes) } }
+    @discardableResult func toggleSequential(_ hashes: [String]) async -> Bool { await run { try await $0.toggleSequential(hashes) } }
+    @discardableResult func toggleFirstLast(_ hashes: [String]) async -> Bool { await run { try await $0.toggleFirstLastPiece(hashes) } }
+    @discardableResult func toggleAltSpeed() async -> Bool { await run { try await $0.toggleAltSpeed() } }
 
-    func setCategory(_ hashes: [String], _ category: String) async {
+    @discardableResult
+    func setCategory(_ hashes: [String], _ category: String) async -> Bool {
         await run { client in
             if !category.isEmpty, self.categories[category] == nil {
                 try await client.createCategory(category)
@@ -200,8 +225,8 @@ final class SessionStore {
         }
     }
 
-    func addTags(_ hashes: [String], _ tags: [String]) async { await run { try await $0.addTags(hashes, tags) } }
-    func removeTags(_ hashes: [String], _ tags: [String]) async { await run { try await $0.removeTags(hashes, tags) } }
+    @discardableResult func addTags(_ hashes: [String], _ tags: [String]) async -> Bool { await run { try await $0.addTags(hashes, tags) } }
+    @discardableResult func removeTags(_ hashes: [String], _ tags: [String]) async -> Bool { await run { try await $0.removeTags(hashes, tags) } }
 
     // MARK: - 錯誤
 

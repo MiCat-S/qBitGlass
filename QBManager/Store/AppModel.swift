@@ -70,9 +70,8 @@ final class AppModel {
             servers.append(server)
         }
         Keychain.set(secret, for: server.secretAccount)
-        // 設定變更後丟棄舊連線，下次進入時重新登入
-        sessions[server.id]?.stopPolling()
-        sessions[server.id] = nil
+        // 已有連線時改用新設定重新登入；畫面上正開著該伺服器也會直接更新
+        sessions[server.id]?.update(server)
         persist()
     }
 

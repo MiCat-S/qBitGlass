@@ -1,5 +1,13 @@
 import SwiftUI
 
+/// 要編輯的伺服器；source 是 sheet 展開的來源按鈕
+struct ServerEditTarget: Identifiable {
+    var server: ServerConfig
+    var isNew: Bool
+    var source: SheetSource?
+    var id: UUID { server.id }
+}
+
 struct ServerEditView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
@@ -7,15 +15,22 @@ struct ServerEditView: View {
     @State private var server: ServerConfig
     @State private var secret: String
     let isNew: Bool
+    private let original: ServerConfig
+    private let originalSecret: String
 
     @State private var testing = false
     @State private var testResult: Result<String, Error>?
 
     init(server: ServerConfig, isNew: Bool) {
+        let secret = Keychain.get(server.secretAccount) ?? ""
         _server = State(initialValue: server)
-        _secret = State(initialValue: Keychain.get(server.secretAccount) ?? "")
+        _secret = State(initialValue: secret)
         self.isNew = isNew
+        original = server
+        originalSecret = secret
     }
+
+    private var hasChanges: Bool { server != original || secret != originalSecret }
 
     var body: some View {
         NavigationStack {
@@ -101,17 +116,21 @@ struct ServerEditView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("取消", role: .cancel) { dismiss() }
+                    DiscardButton(hasChanges: hasChanges) { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("儲存") {
                         model.save(server, secret: secret)
                         dismiss()
+                        // 新增的伺服器儲存後直接進入
+                        if isNew { model.open(server.id) }
                     }
                     .disabled(server.baseURL == nil)
                 }
             }
         }
+        // 有輸入內容時停用下滑關閉，改由「取消」確認是否捨棄
+        .interactiveDismissDisabled(hasChanges)
     }
 
     @ViewBuilder

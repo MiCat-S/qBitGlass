@@ -5,7 +5,7 @@ struct TorrentUpload: Sendable, Hashable {
     var data: Data
 }
 
-struct AddTorrentOptions: Sendable {
+struct AddTorrentOptions: Sendable, Equatable {
     var urls: [String] = []
     var files: [TorrentUpload] = []
     var savePath = ""
