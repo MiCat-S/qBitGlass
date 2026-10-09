@@ -1,0 +1,571 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		092E002068FA86A46D4BBB44 /* ServerEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99F56EEDA651AA9C3929B582 /* ServerEditView.swift */; };
+		0C4E54B027F9054D6B9D70BD /* TorrentListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 487C80187EBE18701798A479 /* TorrentListView.swift */; };
+		0F3AC97A43D259E9D782EC5C /* SyncEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4DF0DBDB69D6B8D839C12FE /* SyncEngine.swift */; };
+		123D912DC1A81E73DB21BC79 /* Multipart.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F13ECB90B64CB3472BEB611 /* Multipart.swift */; };
+		290ACF494B4398EE03686424 /* FilterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 802ED787B4DAA570AB74165C /* FilterView.swift */; };
+		30B3828C4241EE8CD2206625 /* DetailModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2964DD3553E2D2495922DCF1 /* DetailModels.swift */; };
+		3735A395C3A1E5909CE03E70 /* TorrentDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7935DB0BD8049EAC6381222F /* TorrentDetailView.swift */; };
+		4B57AC1CB2EB26426E5A5AB0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5449DEC1AC17C26B6C7CE8DD /* Assets.xcassets */; };
+		4EBE205F77EA4C9A313F366C /* AddTorrentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F4758A827F6C12F604A8344 /* AddTorrentView.swift */; };
+		4F281BE52039BB05F47CC2C6 /* ServerConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B314436619C3E63FB5ECC2D /* ServerConfig.swift */; };
+		6276B9C34FE3C0AA3F208A75 /* ServerListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6FEFE5769C897235EB0E3AA /* ServerListView.swift */; };
+		71508800899C294EEA1F83B7 /* QBClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10A016BB640C3B8EDA1757C5 /* QBClient.swift */; };
+		9BE568378756BD29121F7345 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9122796CB5322D1D34794CCE /* Theme.swift */; };
+		9DF2ED3FFD7C1D736E02289E /* Formatters.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49AB9D86CAC960E2429FF32 /* Formatters.swift */; };
+		9FFABB3459F5E890F65280D6 /* QBManagerUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 057116CFB1CC911F519078AE /* QBManagerUITests.swift */; };
+		ABDE4567AA7B714996535E56 /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EF58F51419F0A61F5D782BA /* SessionStore.swift */; };
+		B34F95594A3A3927FBD91A2E /* ServerState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A527304CD62A674448674BD7 /* ServerState.swift */; };
+		BDC0187EA4EEBB19BD27A3C0 /* TorrentRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F310248D9BA696395540698 /* TorrentRow.swift */; };
+		D535E404D435C5CBA86C08A9 /* Torrent.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF363F27715501817CF50ECF /* Torrent.swift */; };
+		D9402E1DF9CA76252BDCC341 /* TorrentFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = B97A457356A29970F6D00FD8 /* TorrentFilter.swift */; };
+		D947F6D8EAF5C21F44623282 /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DC47C422CAA5EC27A9EE342 /* Keychain.swift */; };
+		DCB909E12D88137B280CE3DA /* JSONValue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1382761817B3EBA5528ADC6E /* JSONValue.swift */; };
+		E3245569E439844F7237D7DC /* CategoryTagViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0E876DB34EBA25D35AE3BB8 /* CategoryTagViews.swift */; };
+		E47339F0FD892C07A5300024 /* QBManagerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE3E1CC5394379059D414EBD /* QBManagerApp.swift */; };
+		EAC0B3C1901539E11FD5D24C /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E0DDCA7BEFE17384BD1B5C6 /* AppModel.swift */; };
+		F4A8866DDD69ED24B03CBBDE /* QBError.swift in Sources */ = {isa = PBXBuildFile; fileRef = D70BB8B70E59DD27770F26E3 /* QBError.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		6D2A59BE85D39A0B1EA22A14 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 08CBADD08DA5CCA1CBD960F0 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 21234ABEB5760A7D3CA42779;
+			remoteInfo = QBManager;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		057116CFB1CC911F519078AE /* QBManagerUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QBManagerUITests.swift; sourceTree = "<group>"; };
+		10A016BB640C3B8EDA1757C5 /* QBClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QBClient.swift; sourceTree = "<group>"; };
+		1382761817B3EBA5528ADC6E /* JSONValue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONValue.swift; sourceTree = "<group>"; };
+		2964DD3553E2D2495922DCF1 /* DetailModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailModels.swift; sourceTree = "<group>"; };
+		2DC47C422CAA5EC27A9EE342 /* Keychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keychain.swift; sourceTree = "<group>"; };
+		2F4758A827F6C12F604A8344 /* AddTorrentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddTorrentView.swift; sourceTree = "<group>"; };
+		487C80187EBE18701798A479 /* TorrentListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TorrentListView.swift; sourceTree = "<group>"; };
+		4EF58F51419F0A61F5D782BA /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
+		5449DEC1AC17C26B6C7CE8DD /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		76CD6315C33F9B49E553C88B /* QBManagerUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = QBManagerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		7935DB0BD8049EAC6381222F /* TorrentDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TorrentDetailView.swift; sourceTree = "<group>"; };
+		7E0DDCA7BEFE17384BD1B5C6 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		802ED787B4DAA570AB74165C /* FilterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterView.swift; sourceTree = "<group>"; };
+		8F310248D9BA696395540698 /* TorrentRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TorrentRow.swift; sourceTree = "<group>"; };
+		9122796CB5322D1D34794CCE /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		99F56EEDA651AA9C3929B582 /* ServerEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerEditView.swift; sourceTree = "<group>"; };
+		9B314436619C3E63FB5ECC2D /* ServerConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerConfig.swift; sourceTree = "<group>"; };
+		9F13ECB90B64CB3472BEB611 /* Multipart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Multipart.swift; sourceTree = "<group>"; };
+		9FC860C68278F7E0805F6771 /* QBManager.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = QBManager.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A0E876DB34EBA25D35AE3BB8 /* CategoryTagViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryTagViews.swift; sourceTree = "<group>"; };
+		A4DF0DBDB69D6B8D839C12FE /* SyncEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncEngine.swift; sourceTree = "<group>"; };
+		A527304CD62A674448674BD7 /* ServerState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerState.swift; sourceTree = "<group>"; };
+		B49AB9D86CAC960E2429FF32 /* Formatters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Formatters.swift; sourceTree = "<group>"; };
+		B97A457356A29970F6D00FD8 /* TorrentFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TorrentFilter.swift; sourceTree = "<group>"; };
+		CF363F27715501817CF50ECF /* Torrent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Torrent.swift; sourceTree = "<group>"; };
+		D6FEFE5769C897235EB0E3AA /* ServerListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerListView.swift; sourceTree = "<group>"; };
+		D70BB8B70E59DD27770F26E3 /* QBError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QBError.swift; sourceTree = "<group>"; };
+		DE3E1CC5394379059D414EBD /* QBManagerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QBManagerApp.swift; sourceTree = "<group>"; };
+		FA77AE6AEF31EED64A84ACA9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		064744881571AED94A10CB1D /* QBManager */ = {
+			isa = PBXGroup;
+			children = (
+				FA77AE6AEF31EED64A84ACA9 /* Info.plist */,
+				0826DD9A0075D9EB6899ED21 /* API */,
+				CB146CD397DC7BD18ED02F95 /* App */,
+				6C7AD60587043BCCB06333B5 /* Models */,
+				38C48BF2F74EE66D6468D037 /* Resources */,
+				73B63EF1E9F24CC39C309AAC /* Store */,
+				1182B60AD9ACC1425F477086 /* Support */,
+				55493AEA56AF2BB37416F022 /* Views */,
+			);
+			path = QBManager;
+			sourceTree = "<group>";
+		};
+		0826DD9A0075D9EB6899ED21 /* API */ = {
+			isa = PBXGroup;
+			children = (
+				9F13ECB90B64CB3472BEB611 /* Multipart.swift */,
+				10A016BB640C3B8EDA1757C5 /* QBClient.swift */,
+				D70BB8B70E59DD27770F26E3 /* QBError.swift */,
+				A4DF0DBDB69D6B8D839C12FE /* SyncEngine.swift */,
+			);
+			path = API;
+			sourceTree = "<group>";
+		};
+		1182B60AD9ACC1425F477086 /* Support */ = {
+			isa = PBXGroup;
+			children = (
+				B49AB9D86CAC960E2429FF32 /* Formatters.swift */,
+				2DC47C422CAA5EC27A9EE342 /* Keychain.swift */,
+				9122796CB5322D1D34794CCE /* Theme.swift */,
+			);
+			path = Support;
+			sourceTree = "<group>";
+		};
+		38C48BF2F74EE66D6468D037 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				5449DEC1AC17C26B6C7CE8DD /* Assets.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		55493AEA56AF2BB37416F022 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				2F4758A827F6C12F604A8344 /* AddTorrentView.swift */,
+				A0E876DB34EBA25D35AE3BB8 /* CategoryTagViews.swift */,
+				802ED787B4DAA570AB74165C /* FilterView.swift */,
+				99F56EEDA651AA9C3929B582 /* ServerEditView.swift */,
+				D6FEFE5769C897235EB0E3AA /* ServerListView.swift */,
+				7935DB0BD8049EAC6381222F /* TorrentDetailView.swift */,
+				487C80187EBE18701798A479 /* TorrentListView.swift */,
+				8F310248D9BA696395540698 /* TorrentRow.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		6482A6C9BE501BA5C507682E /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				9FC860C68278F7E0805F6771 /* QBManager.app */,
+				76CD6315C33F9B49E553C88B /* QBManagerUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		6C7AD60587043BCCB06333B5 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				2964DD3553E2D2495922DCF1 /* DetailModels.swift */,
+				1382761817B3EBA5528ADC6E /* JSONValue.swift */,
+				9B314436619C3E63FB5ECC2D /* ServerConfig.swift */,
+				A527304CD62A674448674BD7 /* ServerState.swift */,
+				CF363F27715501817CF50ECF /* Torrent.swift */,
+				B97A457356A29970F6D00FD8 /* TorrentFilter.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		73B63EF1E9F24CC39C309AAC /* Store */ = {
+			isa = PBXGroup;
+			children = (
+				7E0DDCA7BEFE17384BD1B5C6 /* AppModel.swift */,
+				4EF58F51419F0A61F5D782BA /* SessionStore.swift */,
+			);
+			path = Store;
+			sourceTree = "<group>";
+		};
+		8D7858BD914F2F3D95198FEA /* QBManagerUITests */ = {
+			isa = PBXGroup;
+			children = (
+				057116CFB1CC911F519078AE /* QBManagerUITests.swift */,
+			);
+			path = QBManagerUITests;
+			sourceTree = "<group>";
+		};
+		CB146CD397DC7BD18ED02F95 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				DE3E1CC5394379059D414EBD /* QBManagerApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		FDC46C5D621DEFEA9996E88D = {
+			isa = PBXGroup;
+			children = (
+				064744881571AED94A10CB1D /* QBManager */,
+				8D7858BD914F2F3D95198FEA /* QBManagerUITests */,
+				6482A6C9BE501BA5C507682E /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		21234ABEB5760A7D3CA42779 /* QBManager */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9FCD366D016A1799A26A11C0 /* Build configuration list for PBXNativeTarget "QBManager" */;
+			buildPhases = (
+				88DD657B8963FDF5F3B1B1D2 /* Sources */,
+				C44E450640A157B6D9F0E13C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = QBManager;
+			packageProductDependencies = (
+			);
+			productName = QBManager;
+			productReference = 9FC860C68278F7E0805F6771 /* QBManager.app */;
+			productType = "com.apple.product-type.application";
+		};
+		A7DC8A76B4E0FB01446137C0 /* QBManagerUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F73D5AC144A4E04649D955C2 /* Build configuration list for PBXNativeTarget "QBManagerUITests" */;
+			buildPhases = (
+				57F748C091CB7789756BA135 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				23911B92A955B45A0EBB09C8 /* PBXTargetDependency */,
+			);
+			name = QBManagerUITests;
+			packageProductDependencies = (
+			);
+			productName = QBManagerUITests;
+			productReference = 76CD6315C33F9B49E553C88B /* QBManagerUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		08CBADD08DA5CCA1CBD960F0 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					21234ABEB5760A7D3CA42779 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+					A7DC8A76B4E0FB01446137C0 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+						TestTargetID = 21234ABEB5760A7D3CA42779;
+					};
+				};
+			};
+			buildConfigurationList = FC349E8DD8203757C780669D /* Build configuration list for PBXProject "QBManager" */;
+			developmentRegion = "zh-Hant";
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				"zh-Hant",
+			);
+			mainGroup = FDC46C5D621DEFEA9996E88D;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 6482A6C9BE501BA5C507682E /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				21234ABEB5760A7D3CA42779 /* QBManager */,
+				A7DC8A76B4E0FB01446137C0 /* QBManagerUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		C44E450640A157B6D9F0E13C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4B57AC1CB2EB26426E5A5AB0 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		57F748C091CB7789756BA135 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9FFABB3459F5E890F65280D6 /* QBManagerUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		88DD657B8963FDF5F3B1B1D2 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4EBE205F77EA4C9A313F366C /* AddTorrentView.swift in Sources */,
+				EAC0B3C1901539E11FD5D24C /* AppModel.swift in Sources */,
+				E3245569E439844F7237D7DC /* CategoryTagViews.swift in Sources */,
+				30B3828C4241EE8CD2206625 /* DetailModels.swift in Sources */,
+				290ACF494B4398EE03686424 /* FilterView.swift in Sources */,
+				9DF2ED3FFD7C1D736E02289E /* Formatters.swift in Sources */,
+				DCB909E12D88137B280CE3DA /* JSONValue.swift in Sources */,
+				D947F6D8EAF5C21F44623282 /* Keychain.swift in Sources */,
+				123D912DC1A81E73DB21BC79 /* Multipart.swift in Sources */,
+				71508800899C294EEA1F83B7 /* QBClient.swift in Sources */,
+				F4A8866DDD69ED24B03CBBDE /* QBError.swift in Sources */,
+				E47339F0FD892C07A5300024 /* QBManagerApp.swift in Sources */,
+				4F281BE52039BB05F47CC2C6 /* ServerConfig.swift in Sources */,
+				092E002068FA86A46D4BBB44 /* ServerEditView.swift in Sources */,
+				6276B9C34FE3C0AA3F208A75 /* ServerListView.swift in Sources */,
+				B34F95594A3A3927FBD91A2E /* ServerState.swift in Sources */,
+				ABDE4567AA7B714996535E56 /* SessionStore.swift in Sources */,
+				0F3AC97A43D259E9D782EC5C /* SyncEngine.swift in Sources */,
+				9BE568378756BD29121F7345 /* Theme.swift in Sources */,
+				D535E404D435C5CBA86C08A9 /* Torrent.swift in Sources */,
+				3735A395C3A1E5909CE03E70 /* TorrentDetailView.swift in Sources */,
+				D9402E1DF9CA76252BDCC341 /* TorrentFilter.swift in Sources */,
+				0C4E54B027F9054D6B9D70BD /* TorrentListView.swift in Sources */,
+				BDC0187EA4EEBB19BD27A3C0 /* TorrentRow.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		23911B92A955B45A0EBB09C8 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 21234ABEB5760A7D3CA42779 /* QBManager */;
+			targetProxy = 6D2A59BE85D39A0B1EA22A14 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		199B870527ED6DF35BBC97E4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = QBManager/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.micat.qbmanager;
+				PRODUCT_NAME = QBManager;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		3E0FB89E4EB63CA833C185E7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.micat.qbmanager.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = QBManager;
+			};
+			name = Debug;
+		};
+		62505C7A9B374A181B92E776 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.micat.qbmanager.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = QBManager;
+			};
+			name = Release;
+		};
+		975DFA4959D802895EF8036D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		A045DC1ECE17C10A697B360E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		D73D1C40D5984C9F5500437E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = QBManager/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.micat.qbmanager;
+				PRODUCT_NAME = QBManager;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		9FCD366D016A1799A26A11C0 /* Build configuration list for PBXNativeTarget "QBManager" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D73D1C40D5984C9F5500437E /* Debug */,
+				199B870527ED6DF35BBC97E4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		F73D5AC144A4E04649D955C2 /* Build configuration list for PBXNativeTarget "QBManagerUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3E0FB89E4EB63CA833C185E7 /* Debug */,
+				62505C7A9B374A181B92E776 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		FC349E8DD8203757C780669D /* Build configuration list for PBXProject "QBManager" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				975DFA4959D802895EF8036D /* Debug */,
+				A045DC1ECE17C10A697B360E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 08CBADD08DA5CCA1CBD960F0 /* Project object */;
+}
