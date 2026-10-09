@@ -5,6 +5,7 @@
 
 預設模擬 qBittorrent 5.2+：登入成功回 204（無內容）、帳密錯誤回 401、沒有回傳資料的操作回 204。
 設定環境變數 MOCK_LEGACY=1 則模擬 5.1 以前：登入回 200「Ok.」／「Fails.」。
+MOCK_FAIL=torrents/addTags,torrents/recheck 會讓列出的端點一律回 409，用來測試 App 的錯誤提示。
 
 用法：python3 -I scripts/mock_qb.py [port] [host]   帳號 admin / adminadmin，API Key：qbt_testkey
       host 預設 127.0.0.1；要讓區域網路上的實機連線測試時，可指定本機的區網 IP。
@@ -15,6 +16,7 @@ from urllib.parse import parse_qs, urlparse
 
 USER, PASS, API_KEY = "admin", "adminadmin", "qbt_testkey"
 LEGACY = os.environ.get("MOCK_LEGACY") == "1"
+FAIL = {x.strip() for x in os.environ.get("MOCK_FAIL", "").split(",") if x.strip()}
 LISTEN_PORT = 8080
 lock = threading.Lock()
 sessions = {}          # sid -> {"rid": int, "snap": dict}
@@ -196,6 +198,7 @@ class H(BaseHTTPRequestHandler):
         readonly = {"app/webapiVersion", "app/version", "sync/maindata", "torrents/info", "torrents/files",
                     "torrents/trackers", "torrents/properties", "torrents/categories", "torrents/tags", "transfer/info"}
         if path not in readonly and method != "POST": return self.reply(405, "Method Not Allowed")
+        if path in FAIL: return self.reply(409, "Mock failure")
 
         global alt_speed
         with lock:
