@@ -147,4 +147,32 @@ final class QBManagerUITests: XCTestCase {
         XCTAssertTrue(findCell("Agent.327.Operation.Barbershop").exists)
         shot("12_added")
     }
+
+    /// 從表單新增伺服器並測試連線：密碼錯誤要提示帳密錯誤，正確則連線成功
+    func testServerFormLogin() throws {
+        XCTAssertTrue(app.buttons["chip.all"].waitForExistence(timeout: 10))
+        app.navigationBars.buttons["BackButton"].tap()
+        app.buttons["新增伺服器"].tap()
+
+        let url = app.textFields["http://192.168.1.10:8080"]
+        XCTAssertTrue(url.waitForExistence(timeout: 3))
+        url.tap()
+        url.typeText("http://127.0.0.1:8080")
+        let password = app.secureTextFields["密碼"]
+        password.tap()
+        password.typeText("wrong")
+
+        let test = app.buttons["測試連線"]
+        test.tap()
+        XCTAssertTrue(app.staticTexts["登入失敗：帳號或密碼錯誤"].waitForExistence(timeout: 10))
+        shot("13_login_wrong")
+
+        password.tap()
+        password.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 8) + "adminadmin")
+        test.tap()
+        let ok = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH '連線成功'")).firstMatch
+        XCTAssertTrue(ok.waitForExistence(timeout: 10), "正確帳密應連線成功")
+        shot("14_login_ok")
+        app.buttons["取消"].tap()
+    }
 }

@@ -1,16 +1,21 @@
 """qBittorrent WebUI API v2 模擬伺服器（僅用於本機測試 App）。
 
 依 qBittorrent 5.x 行為實作：SID cookie 登入、未登入回 403、Bearer API Key、
-動作端點只接受 POST、sync/maindata rid 增量同步、409/415 等錯誤碼。
+動作端點只接受 POST、sync/maindata rid 增量同步、409/415 等錯誤碼、主機標頭連接埠驗證（401）。
+
+預設模擬 qBittorrent 5.2+：登入成功回 204（無內容）、帳密錯誤回 401、沒有回傳資料的操作回 204。
+設定環境變數 MOCK_LEGACY=1 則模擬 5.1 以前：登入回 200「Ok.」／「Fails.」。
 
 用法：python3 -I scripts/mock_qb.py [port] [host]   帳號 admin / adminadmin，API Key：qbt_testkey
       host 預設 127.0.0.1；要讓區域網路上的實機連線測試時，可指定本機的區網 IP。
 """
-import copy, hashlib, json, random, re, secrets, sys, threading, time
+import copy, hashlib, json, os, random, re, secrets, sys, threading, time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
 USER, PASS, API_KEY = "admin", "adminadmin", "qbt_testkey"
+LEGACY = os.environ.get("MOCK_LEGACY") == "1"
+LISTEN_PORT = 8080
 lock = threading.Lock()
 sessions = {}          # sid -> {"rid": int, "snap": dict}
 now = int(time.time())
@@ -157,6 +162,9 @@ class H(BaseHTTPRequestHandler):
         length = int(self.headers.get("Content-Length") or 0)
         raw = self.rfile.read(length) if length else b""
         if path is None: return self.reply(404, "Not Found")
+        # 與 qBittorrent 相同：Host 標頭帶的連接埠與實際監聽的連接埠不同時回 401（主機標頭驗證）
+        hp = urlparse("//" + self.headers.get("Host", "")).port
+        if hp is not None and hp != LISTEN_PORT: return self.reply(401, "Unauthorized")
         if self.csrf_bad(): return self.reply(401, "Unauthorized")
         q = {k: v[-1] for k, v in parse_qs(u.query, keep_blank_values=True).items()}
         form, files = {}, []
@@ -177,8 +185,8 @@ class H(BaseHTTPRequestHandler):
             if method != "POST": return self.reply(405, "Method Not Allowed")
             if p.get("username") == USER and p.get("password") == PASS:
                 s = secrets.token_hex(16); sessions[s] = {"rid": 0, "snap": None}
-                return self.reply(200, "Ok.", cookie=s)
-            return self.reply(200, "Fails.")
+                return self.reply(200, "Ok.", cookie=s) if LEGACY else self.reply(204, cookie=s)
+            return self.reply(200, "Fails.") if LEGACY else self.reply(401, "Unauthorized")
         auth = self.headers.get("Authorization", "")
         sid = self.sid()
         if auth == f"Bearer {API_KEY}": sid = sid or "apikey"
@@ -193,8 +201,8 @@ class H(BaseHTTPRequestHandler):
         with lock:
             hs = p.get("hashes", "")
             sel = list(torrents) if hs == "all" else [h for h in hs.split("|") if h in torrents]
-            if path == "app/webapiVersion": return self.reply(200, "2.14.1")
-            if path == "app/version": return self.reply(200, "v5.2.3")
+            if path == "app/webapiVersion": return self.reply(200, "2.11.4" if LEGACY else "2.14.1")
+            if path == "app/version": return self.reply(200, "v5.1.2" if LEGACY else "v5.2.3")
             if path == "sync/maindata": return self.reply(200, maindata(sid, int(p.get("rid", 0) or 0)))
             if path == "torrents/info": return self.reply(200, list(torrents.values()))
             if path in ("torrents/files", "torrents/trackers", "torrents/properties"):
@@ -279,11 +287,13 @@ class H(BaseHTTPRequestHandler):
                 return self.reply(200, "Ok.")
             elif path == "transfer/toggleSpeedLimitsMode": alt_speed = not alt_speed
             else: return self.reply(404, "Not Found")
-            return self.reply(200, "")
+            return self.reply(200, "") if LEGACY else self.reply(204)
 
 if __name__ == "__main__":
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 8080
     host = sys.argv[2] if len(sys.argv) > 2 else "127.0.0.1"
+    LISTEN_PORT = port
     threading.Thread(target=tick, daemon=True).start()
-    print(f"mock qBittorrent on http://{host}:{port}  (admin/adminadmin, API key {API_KEY})", flush=True)
+    mode = "qBittorrent ≤ 5.1" if LEGACY else "qBittorrent 5.2+"
+    print(f"mock {mode} on http://{host}:{port}  (admin/adminadmin, API key {API_KEY})", flush=True)
     ThreadingHTTPServer((host, port), H).serve_forever()
