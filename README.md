@@ -47,12 +47,13 @@
 **批次操作**
 - **全選／反選／全不選**，也可一鍵選取已停止、已完成或錯誤的種子
 - 底部玻璃操作列：**啟動**、**停止**、**強制啟動／取消強制**、**刪除**（可選擇保留或刪除檔案）
-- 更多操作：重新校驗、重新匯報、設定分類、管理標籤、佇列優先順序、依序下載、首尾區塊優先、複製磁力連結
+- 更多操作：重新校驗（會先確認）、重新匯報、設定分類、管理標籤、佇列優先順序、依序下載、首尾區塊優先、複製磁力連結
 - 左滑刪除或啟動／停止，右滑強制啟動，長按開啟完整操作選單
+- 刪除與重新校驗的確認框會從點擊的那一列或按鈕彈出，批次刪除完成後自動離開選取模式
 
 **種子詳情**
 - 概覽：傳輸量、分享率、限速、種子與下載者數、區塊、時間、路徑、Hash
-- 檔案：下載進度，長按可設定優先順序（不下載、普通、高、最高）
+- 檔案：下載進度，點選檔案即可設定優先順序（不下載、普通、高、最高）
 - Tracker：連線狀態、做種、下載與完成數、錯誤訊息
 - 重新命名、變更儲存位置
 
@@ -65,12 +66,14 @@
 - 多伺服器管理，可設定網址子路徑以支援反向代理
 - 登入方式有三種：**帳號密碼**（Session 過期自動重新登入）、**API Key**（qBittorrent 5.2+）、**免驗證**
 - 可信任自簽 HTTPS 憑證
+- 連線失敗時可直接在畫面上編輯伺服器，儲存後立即以新設定重新連線
 - 依 WebAPI 版本自動相容 qBittorrent 4.x（`pause`／`resume`）與 5.x（`stop`／`start`）
 - 透過 `sync/maindata` 增量同步，只在 App 位於前景時輪詢，刷新間隔可在 1–10 秒間調整
 - 密碼與 API Key 存放在 Keychain
 
 **設計**
 - iOS 26+ 使用 Liquid Glass，包括 `glassEffect`、`GlassEffectContainer`、`.buttonStyle(.glass)` 和 `safeAreaBar`；iOS 17–25 自動退回毛玻璃材質
+- iOS 26+ 篩選、新增種子、新增伺服器等畫面會從觸發的工具列按鈕展開
 - 參考 Claude 的視覺風格：使用 New York 襯線字體，配色為 Claude 橘 `#D97757` 搭配象牙白，並支援深色模式
 
 ## 安裝
@@ -116,12 +119,17 @@ scripts/build_ipa.sh       # 輸出 dist/qBitGlass.ipa（未簽名）
 `scripts/mock_qb.py` 是依 qBittorrent WebUI API 行為撰寫的模擬伺服器，只監聽 `127.0.0.1`，不需要安裝 qBittorrent 就能開發與測試。預設模擬 5.2 的回應（登入成功回 204、帳密錯誤回 401，並檢查主機標頭連接埠），設 `MOCK_LEGACY=1` 則模擬 5.1 以前的「Ok.」／「Fails.」：
 
 ```bash
-python3 -I scripts/mock_qb.py 8080 &     # 帳號 admin / adminadmin，API Key：qbt_testkey
+# 帳號 admin / adminadmin，API Key：qbt_testkey；UI 測試需要讓 addTags 失敗來檢查錯誤提示
+MOCK_FAIL=torrents/addTags python3 -I scripts/mock_qb.py 8080 &
 xcodebuild -project QBManager.xcodeproj -scheme QBManager \
   -destination 'platform=iOS Simulator,name=iPhone 18 Pro' test
 ```
 
-UI 測試會跑完以下流程，並把截圖存到 `build/shots/`：載入 → 狀態篩選 → 全選 → 批次強制啟動 → 左滑刪除 → 分類篩選 → 詳情／檔案／Tracker → 新增磁力連結，另外從表單新增伺服器，分別以錯誤與正確的密碼測試連線。
+UI 測試會跑完以下流程，並把截圖存到 `build/shots/`：
+
+- 載入 → 狀態篩選 → 全選 → 批次強制啟動 → 左滑刪除 → 分類篩選 → 詳情／檔案／Tracker → 新增磁力連結
+- 確認框是否從觸發的列或按鈕彈出（比對 popover 與來源元件的位置）、sheet 內的錯誤提示、點選檔案調整優先順序
+- 從表單新增伺服器，分別以錯誤與正確的密碼測試連線，儲存後直接進入；從「更多」和連線失敗畫面編輯伺服器後重新連線
 
 ## 專案結構
 
