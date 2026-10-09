@@ -3,7 +3,8 @@
 依 qBittorrent 5.x 行為實作：SID cookie 登入、未登入回 403、Bearer API Key、
 動作端點只接受 POST、sync/maindata rid 增量同步、409/415 等錯誤碼。
 
-用法：python3 -I scripts/mock_qb.py [port]   帳號 admin / adminadmin，API Key：qbt_testkey
+用法：python3 -I scripts/mock_qb.py [port] [host]   帳號 admin / adminadmin，API Key：qbt_testkey
+      host 預設 127.0.0.1；要讓區域網路上的實機連線測試時，可指定本機的區網 IP。
 """
 import copy, hashlib, json, random, re, secrets, sys, threading, time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -282,6 +283,7 @@ class H(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 8080
+    host = sys.argv[2] if len(sys.argv) > 2 else "127.0.0.1"
     threading.Thread(target=tick, daemon=True).start()
-    print(f"mock qBittorrent on http://127.0.0.1:{port}  (admin/adminadmin, API key {API_KEY})", flush=True)
-    ThreadingHTTPServer(("127.0.0.1", port), H).serve_forever()
+    print(f"mock qBittorrent on http://{host}:{port}  (admin/adminadmin, API key {API_KEY})", flush=True)
+    ThreadingHTTPServer((host, port), H).serve_forever()
