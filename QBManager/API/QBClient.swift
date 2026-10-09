@@ -21,8 +21,8 @@ enum QueueMove: String, Sendable {
     case top = "topPrio", up = "increasePrio", down = "decreasePrio", bottom = "bottomPrio"
 }
 
-/// 處理自簽憑證
-private final class SessionDelegate: NSObject, URLSessionDelegate, @unchecked Sendable {
+/// 處理自簽憑證；不自動跟隨轉址
+private final class SessionDelegate: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
     let trustAll: Bool
     init(trustAll: Bool) { self.trustAll = trustAll }
 
@@ -35,6 +35,12 @@ private final class SessionDelegate: NSObject, URLSessionDelegate, @unchecked Se
         } else {
             completionHandler(.performDefaultHandling, nil)
         }
+    }
+
+    // 301/302 轉址會把 POST 改成 GET 並丟掉表單內容，導致登入失敗；不跟隨，改由上層提示正確網址
+    func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse,
+                    newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) {
+        completionHandler(nil)
     }
 }
 
@@ -205,8 +211,7 @@ actor QBClient {
         if o.firstLastPiece { form.add("firstLastPiecePrio", "true") }
 
         let data = try await send("torrents/add", body: .multipart(form))
-        let text = String(decoding: data, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
-        if text.hasPrefix("Fails") { throw QBError.addFailed }
+        if Self.text(data).hasPrefix("Fails") { throw QBError.addFailed }
     }
 
     func toggleAltSpeed() async throws {
@@ -228,8 +233,11 @@ actor QBClient {
     }
 
     private func text(_ path: String) async throws -> String {
-        let data = try await send(path)
-        return String(decoding: data, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
+        Self.text(try await send(path))
+    }
+
+    private static func text(_ data: Data) -> String {
+        String(decoding: data, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private func send(_ path: String, query: [String: String] = [:], body: Body = .none) async throws -> Data {
@@ -241,7 +249,7 @@ actor QBClient {
             try await ensureLogin(force: true)
             (data, resp) = try await perform(path, query: query, body: body)
         }
-        try Self.check(resp, data)
+        try validate(resp, data)
         return data
     }
 
@@ -261,10 +269,27 @@ actor QBClient {
     private func login() async throws {
         let (data, resp) = try await perform("auth/login",
                                              body: .form(["username": config.username, "password": secret]))
-        if resp.statusCode == 403 { throw QBError.banned }
-        let text = String(decoding: data, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
-        guard resp.statusCode == 200, text.hasPrefix("Ok") else { throw QBError.loginFailed }
-        authenticated = true
+        let text = Self.text(data)
+        switch resp.statusCode {
+        case 200, 204:
+            // qB ≤ 5.1：成功回 200「Ok.」、帳密錯誤回 200「Fails.」
+            // qB ≥ 5.2：成功回 204（沒有內容）、帳密錯誤回 401
+            if text.hasPrefix("Fails") { throw QBError.loginFailed }
+            guard text.isEmpty || text.hasPrefix("Ok") else {
+                throw QBError.notQBittorrent(String(text.prefix(120)))
+            }
+            authenticated = true
+        case 401:
+            // 帳密錯誤（5.2+）與主機標頭驗證失敗都回 401。用不需登入的請求區分：
+            // 被主機標頭驗證擋下時一樣回 401，否則會是 403（未登入）或 200
+            let (_, probe) = try await perform("app/webapiVersion")
+            throw probe.statusCode == 401 ? QBError.hostRejected : QBError.loginFailed
+        case 403:
+            throw QBError.banned
+        default:
+            try validate(resp, data)
+            throw QBError.badResponse
+        }
     }
 
     private func perform(_ path: String, query: [String: String] = [:], body: Body = .none) async throws -> (Data, HTTPURLResponse) {
@@ -308,16 +333,31 @@ actor QBClient {
         }.joined(separator: "&")
     }
 
-    private static func check(_ resp: HTTPURLResponse, _ data: Data) throws {
+    private func validate(_ resp: HTTPURLResponse, _ data: Data) throws {
         let msg = String(decoding: data.prefix(300), as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
         switch resp.statusCode {
         case 200..<300: return
+        case 300..<400: throw QBError.redirected(Self.redirectBase(resp) ?? "")
         case 400: throw QBError.badRequest(msg)
-        case 401, 403: throw QBError.forbidden
+        case 401: throw config.authMode == .apiKey ? QBError.apiKeyRejected : QBError.hostRejected
+        case 403: throw config.authMode == .apiKey ? QBError.apiKeyRejected : QBError.forbidden
         case 404: throw QBError.notFound
         case 409: throw QBError.conflict(msg)
         case 415: throw QBError.invalidTorrent
         default: throw QBError.http(resp.statusCode, msg)
         }
+    }
+
+    /// 由轉址目標推算 WebUI 根網址（去掉 /api/v2/... 部分）
+    private static func redirectBase(_ resp: HTTPURLResponse) -> String? {
+        guard let location = resp.value(forHTTPHeaderField: "Location"),
+              let target = URL(string: location, relativeTo: resp.url)?.absoluteURL else { return nil }
+        let s = target.absoluteString
+        if let r = s.range(of: "/api/v2/") { return String(s[..<r.lowerBound]) }
+        var c = URLComponents()
+        c.scheme = target.scheme
+        c.host = target.host
+        c.port = target.port
+        return c.string
     }
 }

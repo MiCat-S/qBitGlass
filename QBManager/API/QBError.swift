@@ -12,6 +12,12 @@ enum QBError: LocalizedError {
     case badRequest(String)
     case http(Int, String)
     case badResponse
+    /// 伺服器要求轉址；附上建議改用的 WebUI 根網址
+    case redirected(String)
+    /// 被 qBittorrent 的主機標頭驗證擋下（401）
+    case hostRejected
+    case apiKeyRejected
+    case notQBittorrent(String)
 
     var errorDescription: String? {
         switch self {
@@ -26,6 +32,14 @@ enum QBError: LocalizedError {
         case .badRequest(let m): return m.isEmpty ? "請求參數錯誤（400）" : "請求參數錯誤：\(m)"
         case .http(let code, let m): return "HTTP \(code)\(m.isEmpty ? "" : "：\(m)")"
         case .badResponse: return "伺服器回應格式無法解析"
+        case .redirected(let url):
+            return "伺服器要求轉址到 \(url)，請把伺服器網址改成這個位址（常見於反向代理把 http 轉到 https）"
+        case .hostRejected:
+            return "qBittorrent 拒絕了這個連線位址（401）。通常是被「主機標頭驗證」擋下：用 Docker 或路由器把外部連接埠對應到不同的內部連接埠時就會發生。請在 qBittorrent 的 Web UI 設定關閉「啟用主機標頭驗證」，或讓外部與內部連接埠相同。"
+        case .apiKeyRejected:
+            return "API Key 被拒絕（401／403），請確認金鑰正確且未被撤銷"
+        case .notQBittorrent(let body):
+            return "伺服器的回應不像 qBittorrent，請確認網址或反向代理設定。回應內容：\(body)"
         }
     }
 }

@@ -90,8 +90,7 @@ struct ServerEditView: View {
                             Label(info, systemImage: "checkmark.circle.fill")
                                 .foregroundStyle(.green)
                         case .failure(let error):
-                            Label(SessionStore.describe(error), systemImage: "xmark.octagon.fill")
-                                .foregroundStyle(.red)
+                            failure(error)
                         }
                     }
                 }
@@ -113,6 +112,24 @@ struct ServerEditView: View {
                 }
             }
         }
+    }
+
+    @ViewBuilder
+    private func failure(_ error: Error) -> some View {
+        Label(SessionStore.describe(error), systemImage: "xmark.octagon.fill")
+            .foregroundStyle(.red)
+        // 伺服器要求轉址時，提供一鍵改用轉址後的網址
+        if let url = redirectTarget(error) {
+            Button("改用 \(url)", systemImage: "arrow.uturn.right") {
+                server.url = url
+                testResult = nil
+            }
+        }
+    }
+
+    private func redirectTarget(_ error: Error) -> String? {
+        guard case QBError.redirected(let url) = error, !url.isEmpty else { return nil }
+        return url
     }
 
     private func test() async {
