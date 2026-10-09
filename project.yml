@@ -47,9 +47,10 @@ targets:
           - UIInterfaceOrientationPortraitUpsideDown
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
+        # 不可同時設定 NSAllowsLocalNetworking：iOS 10+ 只要有它，NSAllowsArbitraryLoads 就會被忽略，
+        # 導致 nas.lan、DDNS 等網域的 HTTP 連線被 ATS 擋下
         NSAppTransportSecurity:
           NSAllowsArbitraryLoads: true
-          NSAllowsLocalNetworking: true
         NSLocalNetworkUsageDescription: 需要存取區域網路以連線到 qBittorrent WebUI
         LSSupportsOpeningDocumentsInPlace: false
         UIFileSharingEnabled: false
