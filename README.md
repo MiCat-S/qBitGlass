@@ -66,6 +66,7 @@
 - 多伺服器管理，可設定網址子路徑以支援反向代理
 - 登入方式有三種：**帳號密碼**（Session 過期自動重新登入）、**API Key**（qBittorrent 5.2+）、**免驗證**
 - 可信任自簽 HTTPS 憑證
+- 可設定經由代理連線（HTTP 或 SOCKS5），區網與 Tailscale 位址也一律走代理；開啟時自動帶入系統目前的代理
 - 連線失敗時可直接在畫面上編輯伺服器，儲存後立即以新設定重新連線
 - 依 WebAPI 版本自動相容 qBittorrent 4.x（`pause`／`resume`）與 5.x（`stop`／`start`）
 - 透過 `sync/maindata` 增量同步，只在 App 位於前景時輪詢，刷新間隔可在 1–10 秒間調整
@@ -121,6 +122,7 @@ scripts/build_ipa.sh       # 輸出 dist/qBitGlass.ipa（未簽名）
 ```bash
 # 帳號 admin / adminadmin，API Key：qbt_testkey；UI 測試需要讓 addTags 失敗來檢查錯誤提示
 MOCK_FAIL=torrents/addTags python3 -I scripts/mock_qb.py 8080 &
+python3 -I scripts/test_proxy.py 18888 &   # 測試「經由代理連線」用的本機代理（HTTP CONNECT 與 SOCKS5）
 xcodebuild -project QBManager.xcodeproj -scheme QBManager \
   -destination 'platform=iOS Simulator,name=iPhone 18 Pro' test
 ```
