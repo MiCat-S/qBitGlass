@@ -1,4 +1,5 @@
 import Foundation
+import Network
 
 struct TorrentUpload: Sendable, Hashable {
     var filename: String
@@ -69,6 +70,14 @@ actor QBClient {
         cfg.httpCookieAcceptPolicy = .always
         cfg.httpShouldSetCookies = true
         cfg.waitsForConnectivity = false
+        // 指定代理時，所有請求（包括區網與 Tailscale 位址）都經過它；代理連不上就直接報錯，不改走直連
+        if let endpoint = config.proxy.endpoint {
+            var proxy = config.proxy.kind == .socks5
+                ? ProxyConfiguration(socksv5Proxy: endpoint)
+                : ProxyConfiguration(httpCONNECTProxy: endpoint)
+            proxy.allowFailover = false
+            cfg.proxyConfigurations = [proxy]
+        }
         session = URLSession(configuration: cfg,
                              delegate: SessionDelegate(trustAll: config.trustSelfSigned),
                              delegateQueue: nil)

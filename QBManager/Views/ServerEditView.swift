@@ -79,6 +79,8 @@ struct ServerEditView: View {
                     }
                 }
 
+                proxySection
+
                 Section {
                     Toggle("信任自簽憑證", isOn: $server.trustSelfSigned)
                 } header: {
@@ -97,7 +99,7 @@ struct ServerEditView: View {
                             if testing { ProgressView() }
                         }
                     }
-                    .disabled(server.baseURL == nil || testing)
+                    .disabled(server.baseURL == nil || server.proxy.isIncomplete || testing)
 
                     if let testResult {
                         switch testResult {
@@ -125,12 +127,50 @@ struct ServerEditView: View {
                         // 新增的伺服器儲存後直接進入
                         if isNew { model.open(server.id) }
                     }
-                    .disabled(server.baseURL == nil)
+                    .disabled(server.baseURL == nil || server.proxy.isIncomplete)
                 }
             }
         }
         // 有輸入內容時停用下滑關閉，改由「取消」確認是否捨棄
         .interactiveDismissDisabled(hasChanges)
+    }
+
+    private var proxySection: some View {
+        Section {
+            Toggle("經由代理連線", isOn: $server.proxy.enabled)
+                .onChange(of: server.proxy.enabled) { _, on in
+                    // 第一次開啟時帶入系統目前的代理
+                    if on, server.proxy.port.isEmpty, let sys = ProxySettings.system { useSystemProxy(sys) }
+                }
+            if server.proxy.enabled {
+                Picker("類型", selection: $server.proxy.kind) {
+                    ForEach(ProxyKind.allCases) { Text($0.label).tag($0) }
+                }
+                .pickerStyle(.segmented)
+                TextField("代理位址", text: $server.proxy.host)
+                    .keyboardType(.URL)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                TextField("連接埠", text: $server.proxy.port)
+                    .keyboardType(.numberPad)
+                if let sys = ProxySettings.system,
+                   sys.host != server.proxy.host || String(sys.port) != server.proxy.port || server.proxy.kind != .http {
+                    Button("使用目前的系統代理（\(sys.host):\(sys.port)）", systemImage: "arrow.down.circle") {
+                        useSystemProxy(sys)
+                    }
+                }
+            }
+        } header: {
+            Text("代理")
+        } footer: {
+            Text("開啟後，連到這台伺服器的所有請求都會經過指定的代理，包括區網與 Tailscale 位址（系統代理預設會略過這些位址）。例如 Surge 的 HTTP 代理是 127.0.0.1:6152。")
+        }
+    }
+
+    private func useSystemProxy(_ sys: (host: String, port: Int)) {
+        server.proxy.kind = .http
+        server.proxy.host = sys.host
+        server.proxy.port = String(sys.port)
     }
 
     @ViewBuilder
