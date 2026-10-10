@@ -121,12 +121,8 @@ struct TorrentFilter: Equatable, Sendable {
         status != .all || category != nil || tag != nil || trackerHost != nil
     }
 
-    var activeCount: Int {
-        [status != .all, category != nil, tag != nil, trackerHost != nil].filter { $0 }.count
-    }
-
-    /// trackerHosts: hash → 該種子所有 tracker 主機
-    func matches(_ t: Torrent, trackerHosts: [String: Set<String>]) -> Bool {
+    /// words：搜尋字串拆好的關鍵字；trackerHosts：hash → 該種子所有 tracker 主機
+    private func matches(_ t: Torrent, words: [Substring], trackerHosts: [String: Set<String>]) -> Bool {
         guard status.matches(t) else { return false }
         if let category, t.category != category { return false }
         if let tag {
@@ -138,17 +134,15 @@ struct TorrentFilter: Equatable, Sendable {
             if trackerHost.isEmpty { if !hosts.isEmpty { return false } }
             else if !hosts.contains(trackerHost) { return false }
         }
-        let words = search.split(whereSeparator: \.isWhitespace)
-        if !words.isEmpty {
-            for w in words where !t.name.localizedCaseInsensitiveContains(w) && !t.hash.hasPrefix(w.lowercased()) {
-                return false
-            }
+        for w in words where !t.name.localizedCaseInsensitiveContains(w) && !t.hash.hasPrefix(w.lowercased()) {
+            return false
         }
         return true
     }
 
     func apply(_ torrents: some Sequence<Torrent>, trackerHosts: [String: Set<String>]) -> [Torrent] {
-        let filtered = torrents.filter { matches($0, trackerHosts: trackerHosts) }
+        let words = search.split(whereSeparator: \.isWhitespace)
+        let filtered = torrents.filter { matches($0, words: words, trackerHosts: trackerHosts) }
         return filtered.sorted { a, b in
             if sort.less(a, b) { return ascending }
             if sort.less(b, a) { return !ascending }

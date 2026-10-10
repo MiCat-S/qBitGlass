@@ -5,21 +5,21 @@ struct FilterView: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        let all = Array(store.torrents.values)
+        let counts = Counts(store)
         NavigationStack {
             Form {
                 Section("分類") {
-                    option("全部", symbol: "folder", count: all.count, selected: store.filter.category == nil) {
+                    option("全部", symbol: "folder", count: counts.total, selected: store.filter.category == nil) {
                         store.filter.category = nil
                     }
                     option("未分類", symbol: "folder.badge.questionmark",
-                           count: all.filter { $0.category.isEmpty }.count,
+                           count: counts.categories[""] ?? 0,
                            selected: store.filter.category == "") {
                         store.filter.category = ""
                     }
                     ForEach(store.sortedCategories, id: \.name) { c in
                         option(c.name, symbol: "folder.fill",
-                               count: all.filter { $0.category == c.name }.count,
+                               count: counts.categories[c.name] ?? 0,
                                selected: store.filter.category == c.name) {
                             store.filter.category = c.name
                         }
@@ -27,17 +27,17 @@ struct FilterView: View {
                 }
 
                 Section("標籤") {
-                    option("全部", symbol: "tag", count: all.count, selected: store.filter.tag == nil) {
+                    option("全部", symbol: "tag", count: counts.total, selected: store.filter.tag == nil) {
                         store.filter.tag = nil
                     }
                     option("無標籤", symbol: "tag.slash",
-                           count: all.filter { $0.tags.isEmpty }.count,
+                           count: counts.untagged,
                            selected: store.filter.tag == "") {
                         store.filter.tag = ""
                     }
                     ForEach(store.tags, id: \.self) { tag in
                         option(tag, symbol: "tag.fill",
-                               count: all.filter { $0.tags.contains(tag) }.count,
+                               count: counts.tags[tag] ?? 0,
                                selected: store.filter.tag == tag) {
                             store.filter.tag = tag
                         }
@@ -45,18 +45,17 @@ struct FilterView: View {
                 }
 
                 Section("Tracker") {
-                    let hostCounts = trackerCounts(all)
-                    option("全部", symbol: "antenna.radiowaves.left.and.right", count: all.count,
+                    option("全部", symbol: "antenna.radiowaves.left.and.right", count: counts.total,
                            selected: store.filter.trackerHost == nil) {
                         store.filter.trackerHost = nil
                     }
                     option("無 Tracker", symbol: "antenna.radiowaves.left.and.right.slash",
-                           count: hostCounts[""] ?? 0,
+                           count: counts.trackers[""] ?? 0,
                            selected: store.filter.trackerHost == "") {
                         store.filter.trackerHost = ""
                     }
-                    ForEach(hostCounts.keys.filter { !$0.isEmpty }.sorted(), id: \.self) { host in
-                        option(host, symbol: "server.rack", count: hostCounts[host] ?? 0,
+                    ForEach(counts.trackers.keys.filter { !$0.isEmpty }.sorted(), id: \.self) { host in
+                        option(host, symbol: "server.rack", count: counts.trackers[host] ?? 0,
                                selected: store.filter.trackerHost == host) {
                             store.filter.trackerHost = host
                         }
@@ -105,16 +104,6 @@ struct FilterView: View {
         .presentationDetents([.medium, .large])
     }
 
-    private func trackerCounts(_ all: [Torrent]) -> [String: Int] {
-        var counts: [String: Int] = [:]
-        for t in all {
-            let hosts = store.hosts(of: t)
-            if hosts.isEmpty { counts["", default: 0] += 1 }
-            for h in hosts { counts[h, default: 0] += 1 }
-        }
-        return counts
-    }
-
     private func option(_ title: String, symbol: String, count: Int, selected: Bool,
                         action: @escaping () -> Void) -> some View {
         Button(action: action) {
@@ -130,6 +119,29 @@ struct FilterView: View {
                     .foregroundStyle(Theme.accent)
                     .opacity(selected ? 1 : 0)
             }
+        }
+    }
+}
+
+/// 走訪一次算出分類、標籤、Tracker 的種子數，取代每個選項各掃一遍
+private struct Counts {
+    var total = 0
+    /// 分類名稱 → 數量；空字串為未分類
+    var categories: [String: Int] = [:]
+    var tags: [String: Int] = [:]
+    var untagged = 0
+    /// Tracker 主機 → 數量；空字串為無 Tracker
+    var trackers: [String: Int] = [:]
+
+    @MainActor init(_ store: SessionStore) {
+        for t in store.torrents.values {
+            total += 1
+            categories[t.category, default: 0] += 1
+            if t.tags.isEmpty { untagged += 1 }
+            for tag in t.tags { tags[tag, default: 0] += 1 }
+            let hosts = store.hosts(of: t)
+            if hosts.isEmpty { trackers["", default: 0] += 1 }
+            for h in hosts { trackers[h, default: 0] += 1 }
         }
     }
 }

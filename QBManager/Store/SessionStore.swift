@@ -21,6 +21,12 @@ final class SessionStore {
     private(set) var appVersion = ""
     private(set) var apiVersion = ""
     private(set) var hasLoaded = false
+    /// 篩選、排序後要顯示的種子；只在資料或篩選條件變動時重算，不在每次畫面更新時重算
+    private(set) var visibleTorrents: [Torrent] = []
+    /// 各狀態的種子數（狀態膠囊與篩選面板用），每次同步只算一遍
+    private(set) var statusCounts: [StatusFilter: Int] = [:]
+    /// 連線失敗後是否還會自動重試；帳密錯誤這類問題不會
+    private(set) var willRetry = false
 
     /// 輪詢時的暫時性錯誤（顯示在畫面上方）
     var syncError: String?
@@ -29,6 +35,8 @@ final class SessionStore {
 
     var filter = TorrentFilter() {
         didSet {
+            guard filter != oldValue else { return }
+            updateVisible()
             guard filter.sort != oldValue.sort || filter.ascending != oldValue.ascending else { return }
             UserDefaults.standard.set(filter.sort.rawValue, forKey: "sort.field")
             UserDefaults.standard.set(filter.ascending, forKey: "sort.ascending")
@@ -42,6 +50,9 @@ final class SessionStore {
     @ObservationIgnored private var sceneActive = true
     /// 每次重新連線或改設定就加一，讓進行中的舊請求結果被丟棄
     @ObservationIgnored private var generation = 0
+    /// 自動輪詢暫停到這個時間；.distantFuture 表示等使用者手動重試
+    @ObservationIgnored private var pausedUntil: Date?
+    @ObservationIgnored private var retryDelay: TimeInterval = 0
 
     init(server: ServerConfig) {
         self.server = server
@@ -53,21 +64,30 @@ final class SessionStore {
 
     // MARK: - 衍生資料
 
-    var visibleTorrents: [Torrent] { filter.apply(torrents.values, trackerHosts: trackerHosts) }
-
     var sortedCategories: [TorrentCategory] {
         categories.values.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }
 
-    func count(_ status: StatusFilter) -> Int {
-        status == .all ? torrents.count : torrents.values.reduce(0) { $0 + (status.matches($1) ? 1 : 0) }
-    }
+    func count(_ status: StatusFilter) -> Int { statusCounts[status] ?? 0 }
 
     func hosts(of t: Torrent) -> Set<String> {
         trackerHosts[t.hash] ?? (t.trackerHost.isEmpty ? [] : [t.trackerHost])
     }
 
     var usesStopStart: Bool { APIVersion(apiVersion) >= APIVersion("2.11") }
+
+    private func updateVisible() {
+        visibleTorrents = filter.apply(torrents.values, trackerHosts: trackerHosts)
+    }
+
+    /// 走訪一次算出所有狀態的數量，取代每個狀態膠囊各掃一遍
+    private func recount() {
+        var counts: [StatusFilter: Int] = [:]
+        for t in torrents.values {
+            for status in StatusFilter.allCases where status.matches(t) { counts[status, default: 0] += 1 }
+        }
+        statusCounts = counts
+    }
 
     // MARK: - 輪詢
 
@@ -77,6 +97,11 @@ final class SessionStore {
 
     func setSceneActive(_ active: Bool) {
         sceneActive = active
+        // 回到前景時，暫時性錯誤不必等退避時間，立刻再試一次
+        if active, pausedUntil != .distantFuture {
+            pausedUntil = nil
+            retryDelay = 0
+        }
         updatePolling()
     }
 
@@ -89,7 +114,7 @@ final class SessionStore {
         pollTask = Task { [weak self] in
             while !Task.isCancelled {
                 guard let self else { return }
-                await self.refresh()
+                await self.autoRefresh()
                 let interval = UserDefaults.standard.double(forKey: "refreshInterval")
                 try? await Task.sleep(for: .seconds(interval > 0 ? interval : 2))
             }
@@ -101,10 +126,19 @@ final class SessionStore {
         pollTask = nil
     }
 
+    /// 輪詢觸發的刷新：失敗後依退避時間再試，不可恢復的錯誤則等使用者手動重試
+    private func autoRefresh() async {
+        if let pausedUntil, Date() < pausedUntil { return }
+        await refresh()
+    }
+
+    /// 下拉重新整理：自動更新已因錯誤停止時，重新建立連線再試一次
+    func manualRefresh() async {
+        if pausedUntil == .distantFuture { await reconnect() } else { await refresh() }
+    }
+
     func reconnect() async {
-        generation += 1
-        client = nil
-        engine = nil
+        resetConnection()
         hasLoaded = false
         state = .idle
         await refresh()
@@ -113,9 +147,7 @@ final class SessionStore {
     /// 伺服器設定變更：清掉舊資料並以新設定重新登入；正在顯示時立即重新連線
     func update(_ server: ServerConfig) {
         self.server = server
-        generation += 1
-        client = nil
-        engine = nil
+        resetConnection()
         hasLoaded = false
         state = .idle
         torrents = [:]
@@ -123,8 +155,20 @@ final class SessionStore {
         tags = []
         trackerHosts = [:]
         serverState = ServerState()
+        visibleTorrents = []
+        statusCounts = [:]
         syncError = nil
         if holders > 0 && sceneActive { Task { await refresh() } }
+    }
+
+    /// 丟棄目前的連線，並清除重試狀態
+    private func resetConnection() {
+        generation += 1
+        client = nil
+        engine = nil
+        pausedUntil = nil
+        retryDelay = 0
+        willRetry = false
     }
 
     func refresh() async {
@@ -144,29 +188,80 @@ final class SessionStore {
             guard let engine else { return }
             let snap = try await engine.poll()
             guard gen == generation else { return }
-            torrents = snap.torrents
-            categories = snap.categories
-            tags = snap.tags
-            trackerHosts = snap.trackerHosts
-            serverState = snap.serverState
+            apply(snap)
             hasLoaded = true
             state = .connected
             syncError = nil
+            pausedUntil = nil
+            retryDelay = 0
+            willRetry = false
         } catch {
             if Self.isCancellation(error) || gen != generation { return }
-            let msg = Self.describe(error)
-            if hasLoaded {
-                syncError = msg
-            } else {
-                state = .failed(msg)
-                client = nil
-                engine = nil
+            handleFailure(error)
+        }
+    }
+
+    /// 只更新有變動的部分，沒有變化時不觸發畫面重繪，也不重新排序
+    private func apply(_ snap: SyncSnapshot) {
+        var listChanged = false
+        if snap.torrentsChanged || !hasLoaded {
+            torrents = snap.torrents
+            recount()
+            listChanged = true
+        }
+        if trackerHosts != snap.trackerHosts {
+            trackerHosts = snap.trackerHosts
+            listChanged = true
+        }
+        if listChanged { updateVisible() }
+        if categories != snap.categories { categories = snap.categories }
+        if tags != snap.tags { tags = snap.tags }
+        if serverState != snap.serverState { serverState = snap.serverState }
+    }
+
+    /// 暫時性錯誤（網路不通、逾時）逐步拉長間隔重試，最長 60 秒。
+    /// 帳密錯誤、被封鎖、網址或憑證設定錯誤，重試只會再失敗（帳密錯誤還會讓 qBittorrent 封鎖 IP），
+    /// 所以停止自動重試，等使用者按重試或修改設定
+    private func handleFailure(_ error: Error) {
+        let msg = Self.describe(error)
+        let transient = Self.isTransient(error)
+        if transient {
+            retryDelay = retryDelay == 0 ? 2 : min(retryDelay * 2, 60)
+            pausedUntil = Date().addingTimeInterval(retryDelay)
+        } else {
+            pausedUntil = .distantFuture
+        }
+        willRetry = transient
+        if hasLoaded {
+            syncError = transient ? msg : "\(msg)（已暫停自動更新，下拉可重新連線）"
+        } else {
+            state = .failed(msg)
+            client = nil
+            engine = nil
+        }
+    }
+
+    private static func isTransient(_ error: Error) -> Bool {
+        if let u = error as? URLError {
+            switch u.code {
+            case .timedOut, .cannotConnectToHost, .cannotFindHost, .dnsLookupFailed, .networkConnectionLost,
+                 .notConnectedToInternet, .cannotLoadFromNetwork, .dataNotAllowed, .internationalRoamingOff,
+                 .callIsActive:
+                return true
+            default:
+                return false
             }
+        }
+        switch error as? QBError {
+        case .http(let code, _): return code >= 500
+        case .badResponse: return true
+        default: return false
         }
     }
 
     private func connect(_ gen: Int) async throws {
-        state = .connecting
+        // 背景重試時維持錯誤畫面，不要每次重試都閃回「連線中」
+        if case .failed = state {} else { state = .connecting }
         let secret = Keychain.get(server.secretAccount) ?? ""
         let c = try QBClient(config: server, secret: secret)
         let info = try await c.connect()

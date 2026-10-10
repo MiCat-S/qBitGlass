@@ -98,7 +98,7 @@ struct TorrentListView: View {
                 ContentUnavailableView {
                     Label("無法連線", systemImage: "wifi.exclamationmark")
                 } description: {
-                    Text(message)
+                    Text(store.willRetry ? "\(message)\n稍後會自動重試" : message)
                 } actions: {
                     Button("重試") { Task { await store.reconnect() } }
                         .glassButton(prominent: true)
@@ -130,7 +130,7 @@ struct TorrentListView: View {
             .themedList()
             .environment(\.editMode, $editMode)
             .searchable(text: $store.filter.search, prompt: "搜尋名稱或 Hash")
-            .refreshable { await store.refresh() }
+            .refreshable { await store.manualRefresh() }
             .overlay {
                 if visible.isEmpty {
                     ContentUnavailableView {

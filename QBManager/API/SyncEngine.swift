@@ -2,6 +2,8 @@ import Foundation
 
 struct SyncSnapshot: Sendable {
     var torrents: [String: Torrent]
+    /// 這次同步種子清單是否有變動（沒有時畫面不必重新篩選排序）
+    var torrentsChanged: Bool
     var categories: [String: TorrentCategory]
     var tags: [String]
     /// hash → 該種子所有 tracker 主機（qB ≥ 4.5 的 maindata 才有 trackers 欄位）
@@ -23,23 +25,25 @@ actor SyncEngine {
 
     init(client: QBClient) { self.client = client }
 
-    func reset() { rid = 0 }
-
     func poll() async throws -> SyncSnapshot {
         let data = try await client.mainData(rid: rid)
         guard let obj = try? JSONDecoder().decode([String: JSONValue].self, from: data) else {
             throw QBError.badResponse
         }
-        merge(obj)
+        let torrentsChanged = merge(obj)
         return SyncSnapshot(torrents: torrents,
+                            torrentsChanged: torrentsChanged,
                             categories: categories,
                             tags: tags.sorted { $0.localizedStandardCompare($1) == .orderedAscending },
                             trackerHosts: trackerHosts,
                             serverState: ServerState(raw: serverState))
     }
 
-    private func merge(_ obj: [String: JSONValue]) {
-        if obj["full_update"]?.bool == true {
+    /// 合併部分更新；回傳種子清單是否有變動
+    private func merge(_ obj: [String: JSONValue]) -> Bool {
+        let fullUpdate = obj["full_update"]?.bool == true
+        let torrentsChanged = fullUpdate || obj["torrents"] != nil || obj["torrents_removed"] != nil
+        if fullUpdate {
             raw = [:]; torrents = [:]; categories = [:]; tags = []; trackers = [:]; serverState = [:]
         }
         rid = Int(obj["rid"]?.int ?? 0)
@@ -74,7 +78,7 @@ actor SyncEngine {
         for t in obj["tags"]?.array ?? [] { if let s = t.string { tags.insert(s) } }
         for t in obj["tags_removed"]?.array ?? [] { if let s = t.string { tags.remove(s) } }
 
-        var trackersChanged = obj["full_update"]?.bool == true
+        var trackersChanged = fullUpdate
         if let changed = obj["trackers"]?.object {
             for (url, value) in changed {
                 trackers[url] = (value.array ?? []).compactMap(\.string)
@@ -89,6 +93,7 @@ actor SyncEngine {
         if let state = obj["server_state"]?.object {
             serverState.merge(state) { _, new in new }
         }
+        return torrentsChanged
     }
 
     private func rebuildTrackerHosts() {

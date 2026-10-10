@@ -56,6 +56,9 @@ actor QBClient {
     private let session: URLSession
     private var authenticated = false
     private var loginTask: Task<Void, Error>?
+    /// 帳密錯誤、IP 被封鎖、API Key 被拒之後不再送出請求：重試只會再失敗，
+    /// 帳密錯誤累積幾次還會讓 qBittorrent 封鎖這個 IP。要再試就建立新的 QBClient（重新連線或改設定）
+    private var authError: QBError?
 
     private(set) var apiVersion = APIVersion("0")
     private(set) var appVersion = ""
@@ -170,10 +173,6 @@ actor QBClient {
         try await post("torrents/removeTags", ["hashes": join(hashes), "tags": tags.joined(separator: ",")])
     }
 
-    func createTags(_ tags: [String]) async throws {
-        try await post("torrents/createTags", ["tags": tags.joined(separator: ",")])
-    }
-
     func setLocation(_ hashes: [String], _ location: String) async throws {
         try await post("torrents/setLocation", ["hashes": join(hashes), "location": location])
     }
@@ -250,6 +249,7 @@ actor QBClient {
     }
 
     private func send(_ path: String, query: [String: String] = [:], body: Body = .none) async throws -> Data {
+        if let authError { throw authError }
         try await ensureLogin(force: false)
         var (data, resp) = try await perform(path, query: query, body: body)
         if resp.statusCode == 403, config.authMode == .password {
@@ -258,8 +258,17 @@ actor QBClient {
             try await ensureLogin(force: true)
             (data, resp) = try await perform(path, query: query, body: body)
         }
-        try validate(resp, data)
+        do {
+            try validate(resp, data)
+        } catch QBError.apiKeyRejected {
+            throw authFailed(.apiKeyRejected)
+        }
         return data
+    }
+
+    private func authFailed(_ error: QBError) -> QBError {
+        authError = error
+        return error
     }
 
     private func ensureLogin(force: Bool) async throws {
@@ -283,7 +292,7 @@ actor QBClient {
         case 200, 204:
             // qB ≤ 5.1：成功回 200「Ok.」、帳密錯誤回 200「Fails.」
             // qB ≥ 5.2：成功回 204（沒有內容）、帳密錯誤回 401
-            if text.hasPrefix("Fails") { throw QBError.loginFailed }
+            if text.hasPrefix("Fails") { throw authFailed(.loginFailed) }
             guard text.isEmpty || text.hasPrefix("Ok") else {
                 throw QBError.notQBittorrent(String(text.prefix(120)))
             }
@@ -292,9 +301,9 @@ actor QBClient {
             // 帳密錯誤（5.2+）與主機標頭驗證失敗都回 401。用不需登入的請求區分：
             // 被主機標頭驗證擋下時一樣回 401，否則會是 403（未登入）或 200
             let (_, probe) = try await perform("app/webapiVersion")
-            throw probe.statusCode == 401 ? QBError.hostRejected : QBError.loginFailed
+            throw probe.statusCode == 401 ? QBError.hostRejected : authFailed(.loginFailed)
         case 403:
-            throw QBError.banned
+            throw authFailed(.banned)
         default:
             try validate(resp, data)
             throw QBError.badResponse
