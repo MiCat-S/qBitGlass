@@ -327,11 +327,52 @@ final class QBManagerUITests: XCTestCase {
     }
 
     private func replaceURL(_ url: String) {
-        let field = app.textFields["http://192.168.1.10:8080"]
+        replaceText(app.textFields["http://192.168.1.10:8080"], with: url)
+    }
+
+    private func replaceText(_ field: XCUIElement, with text: String) {
         XCTAssertTrue(field.waitForExistence(timeout: 3))
         // 點在欄位最右側讓游標落在結尾，再整段刪掉重打
         field.coordinate(withNormalizedOffset: CGVector(dx: 0.98, dy: 0.5)).tap()
         let old = (field.value as? String) ?? ""
-        field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: old.count + 2) + url)
+        field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: old.count + 2) + text)
+    }
+
+    /// 經由代理連線：代理連不上時要失敗（證明沒有改走直連），指向測試代理後 HTTP 與 SOCKS5 都能連上，
+    /// 儲存後清單也經過代理載入。需同時執行 scripts/test_proxy.py（127.0.0.1:18888）
+    func testServerViaProxy() throws {
+        XCTAssertTrue(app.buttons["chip.all"].waitForExistence(timeout: 10))
+        app.navigationBars.buttons["更多"].tap()
+        tapMenuItem("編輯伺服器…")
+        let toggle = app.switches["經由代理連線"]
+        XCTAssertTrue(toggle.waitForExistence(timeout: 3))
+        toggle.switches.firstMatch.tap()
+        // 開啟時可能帶入系統代理（例如 Surge），先換成測試用的位址，確認後才送出任何請求。
+        // 先點連接埠讓表單捲到鍵盤上方，再改位址
+        let port = app.textFields["連接埠"]
+        replaceText(port, with: "1")
+        replaceText(app.textFields["代理位址"], with: "127.0.0.1")
+        XCTAssertEqual(port.value as? String, "1")
+        XCTAssertEqual(app.textFields["代理位址"].value as? String, "127.0.0.1")
+
+        let test = app.buttons["測試連線"]
+        let ok = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH '連線成功'")).firstMatch
+        test.tap()
+        sleep(3)
+        XCTAssertFalse(ok.exists, "代理連不上時不應改走直連而成功")
+        shot("22_proxy_unreachable")
+
+        replaceText(port, with: "18888")
+        test.tap()
+        XCTAssertTrue(ok.waitForExistence(timeout: 10), "經由 HTTP 代理應連線成功")
+
+        app.buttons["SOCKS5"].tap()
+        test.tap()
+        XCTAssertTrue(ok.waitForExistence(timeout: 10), "經由 SOCKS5 代理應連線成功")
+        shot("23_proxy_socks5")
+
+        app.buttons["儲存"].tap()
+        XCTAssertTrue(app.buttons["chip.all"].waitForExistence(timeout: 10), "儲存後應經由代理重新載入清單")
+        shot("24_proxy_list")
     }
 }
