@@ -13,8 +13,6 @@ enum TorrentState: String, Sendable {
     var isErrored: Bool { self == .error || self == .missingFiles }
     var isChecking: Bool { [.checkingUP, .checkingDL, .checkingResumeData].contains(self) }
     var isStalled: Bool { self == .stalledUP || self == .stalledDL }
-    var isForced: Bool { [.forcedUP, .forcedDL, .forcedMetaDL].contains(self) }
-    var isQueued: Bool { self == .queuedUP || self == .queuedDL }
 
     /// 對應 qBittorrent 的 isDownloading()
     var isDownloading: Bool {
@@ -94,11 +92,9 @@ struct Torrent: Identifiable, Hashable, Sendable {
 
     var name: String
     var state: TorrentState
-    var stateRaw: String
     var progress: Double
     var size: Int64
     var totalSize: Int64
-    var completed: Int64
     var amountLeft: Int64
     var downloaded: Int64
     var uploaded: Int64
@@ -121,12 +117,10 @@ struct Torrent: Identifiable, Hashable, Sendable {
     var seqDl: Bool
     var firstLastPiecePrio: Bool
     var autoTmm: Bool
-    var superSeeding: Bool
     var numSeeds: Int
     var numComplete: Int
     var numLeechs: Int
     var numIncomplete: Int
-    var priority: Int
     var savePath: String
     var contentPath: String
     var magnetURI: String
@@ -135,12 +129,10 @@ struct Torrent: Identifiable, Hashable, Sendable {
     init(hash: String, dict d: [String: JSONValue]) {
         self.hash = hash
         name = d.str("name")
-        stateRaw = d.str("state")
-        state = TorrentState(raw: stateRaw)
+        state = TorrentState(raw: d.str("state"))
         progress = d.dbl("progress")
         size = d.i64("size")
         totalSize = d.i64("total_size")
-        completed = d.i64("completed")
         amountLeft = d.i64("amount_left")
         downloaded = d.i64("downloaded")
         uploaded = d.i64("uploaded")
@@ -166,12 +158,10 @@ struct Torrent: Identifiable, Hashable, Sendable {
         seqDl = d.bool("seq_dl")
         firstLastPiecePrio = d.bool("f_l_piece_prio")
         autoTmm = d.bool("auto_tmm")
-        superSeeding = d.bool("super_seeding")
         numSeeds = d.int("num_seeds")
         numComplete = d.int("num_complete")
         numLeechs = d.int("num_leechs")
         numIncomplete = d.int("num_incomplete")
-        priority = d.int("priority")
         savePath = d.str("save_path")
         contentPath = d.str("content_path")
         magnetURI = d.str("magnet_uri")
